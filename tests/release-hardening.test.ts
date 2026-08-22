@@ -136,4 +136,12 @@ describe('release hardening', () => {
     }
     expect(dockerfile).toMatch(/WORKDIR \/work\r?\nRUN chown node:node \/work\r?\nUSER node/)
   })
+
+  test('CI builds and smoke-tests the container image', () => {
+    const workflow = repositoryFile('.github/workflows/ci.yml')
+    const container = workflowJob(workflow, 'container')
+    expect(container).toContain('docker build --tag whichtool:test .')
+    expect(container).toContain('docker run --rm whichtool:test --version')
+    expect(container).toContain('docker run --rm whichtool:test --help')
+  })
 })

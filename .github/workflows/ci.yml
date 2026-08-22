@@ -98,3 +98,15 @@ jobs:
           npm install "$GITHUB_WORKSPACE"/whichtool-*.tgz
           npx whichtool --version
           npx whichtool inspect "$GITHUB_WORKSPACE/tests/fixtures/servers/clean.json"
+
+  # Build the same image users pull from GHCR and exercise its entrypoint.
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Build image
+        run: docker build --tag whichtool:test .
+      - name: Smoke-test image
+        run: |
+          docker run --rm whichtool:test --version
+          docker run --rm whichtool:test --help
