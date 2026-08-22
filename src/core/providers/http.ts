@@ -8,9 +8,17 @@ import {
 import { ProviderError } from './types.js'
 
 export const DEFAULT_TIMEOUT_MS = 300_000
-export const DEFAULT_RETRIES = 3
+// A retry can turn one trial into another billable provider request. Cost-sensitive callers
+// get one attempt by default; programmatic callers may still opt in explicitly.
+export const DEFAULT_RETRIES = 0
 const RETRY_BASE_MS = 500
 const MAX_RESPONSE_BYTES = 16 * 1024 * 1024
+
+// AbortSignal.aborted is typed readonly even though it changes asynchronously. Reading it
+// through a function prevents TypeScript from treating the pre-await value as permanent.
+function isAbortRequested(signal: AbortSignal | undefined): boolean {
+  return signal?.aborted === true
+}
 
 export interface JsonPosterOptions {
   endpoint: string
@@ -25,8 +33,22 @@ export function stripCredentials(url: string): string {
   return redactSensitiveUrl(url)
 }
 
-async function sleep(ms: number): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, ms))
+async function sleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  if (signal === undefined) {
+    await new Promise<void>((resolve) => setTimeout(resolve, ms))
+    return
+  }
+  if (signal.aborted) return
+
+  await new Promise<void>((resolve) => {
+    const done = (): void => {
+      clearTimeout(timer)
+      signal.removeEventListener('abort', done)
+      resolve()
+    }
+    const timer = setTimeout(done, ms)
+    signal.addEventListener('abort', done, { once: true })
+  })
 }
 
 async function boundedResponseText(response: Response, endpoint: string): Promise<string> {
@@ -62,7 +84,8 @@ async function boundedResponseText(response: Response, endpoint: string): Promis
 }
 
 /**
- * POST JSON and return the parsed object, retrying what is worth retrying.
+ * POST JSON and return the parsed object. Transient failures are retried only when the caller
+ * explicitly opts in with `retries`.
  *
  * Shared by every HTTP provider so that timeout, backoff and credential stripping behave
  * identically whichever endpoint a run points at — a provider that retried differently
@@ -82,12 +105,16 @@ export function createJsonPoster(
 
   return async (body: JsonObject, signal: AbortSignal | undefined): Promise<JsonObject> => {
     let lastError: ProviderError | null = null
+    const cancelled = (): ProviderError =>
+      new ProviderError(`${safeEndpoint}: request cancelled`, { retryable: false })
 
     for (let attempt = 0; attempt <= retries; attempt += 1) {
+      if (isAbortRequested(signal)) throw cancelled()
       if (attempt > 0) {
         // Plain exponential backoff, no jitter: two runs with the same inputs should take
         // the same shape, and a random delay buys little against a single endpoint.
-        await sleep(RETRY_BASE_MS * 2 ** (attempt - 1))
+        await sleep(RETRY_BASE_MS * 2 ** (attempt - 1), signal)
+        if (isAbortRequested(signal)) throw cancelled()
       }
 
       let response: Response
@@ -102,14 +129,19 @@ export function createJsonPoster(
               : AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)]),
         })
       } catch (cause) {
-        const rawMessage = cause instanceof Error ? cause.message : String(cause)
+        const callerAborted = isAbortRequested(signal)
+        const rawMessage = callerAborted
+          ? 'request cancelled'
+          : cause instanceof Error
+            ? cause.message
+            : String(cause)
         const message = redactKnownHttpSecrets(
           rawMessage,
           options.endpoint,
           safeEndpoint,
           credentials,
         )
-        const aborted = cause instanceof Error && cause.name === 'AbortError'
+        const aborted = callerAborted || (cause instanceof Error && cause.name === 'AbortError')
         lastError = new ProviderError(`${safeEndpoint}: ${message}`, { retryable: !aborted })
         if (aborted) throw lastError
         continue

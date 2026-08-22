@@ -2,6 +2,8 @@ import type { McpProcess, SpawnSpec } from '../core/transport/types.js'
 
 export interface Runtime {
   readonly name: 'bun' | 'node'
+  /** Aborted when the human running the CLI asks the current command to stop. */
+  readonly signal?: AbortSignal | undefined
   readTextFile(path: string): Promise<string>
   writeTextFile(path: string, content: string): Promise<void>
   fileExists(path: string): Promise<boolean>

@@ -1,4 +1,4 @@
-import { WhichtoolError } from '../core/errors.js'
+import { CancellationError, WhichtoolError } from '../core/errors.js'
 import { sanitizeText } from '../core/report/sanitize.js'
 import { redactMachinePaths } from './paths.js'
 import type { Runtime } from '../runtime/types.js'
@@ -12,7 +12,7 @@ import { runRun } from './commands/run.js'
 import { runTasksLint } from './commands/tasks.js'
 import { runTasksGenerate, runTasksMutate } from './commands/tasks-write.js'
 
-export const EXIT = { ok: 0, thresholdViolated: 1, error: 2 } as const
+export const EXIT = { ok: 0, thresholdViolated: 1, error: 2, cancelled: 130 } as const
 
 const COMMANDS: Record<string, string> = {
   inspect: 'Surface, token budget, annotations. No LLM, no key.',
@@ -118,7 +118,7 @@ export async function main(argv: readonly string[], runtime: Runtime): Promise<n
     if (error instanceof WhichtoolError) {
       runtime.writeErr(`whichtool: ${clean(error.message)}\n`)
       if (error.hint !== undefined) runtime.writeErr(`  ${clean(error.hint)}\n`)
-      return EXIT.error
+      return error instanceof CancellationError ? EXIT.cancelled : EXIT.error
     }
     runtime.writeErr(
       `whichtool: ${clean(error instanceof Error ? (error.stack ?? error.message) : String(error))}\n`,

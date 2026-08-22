@@ -11,6 +11,10 @@ export interface ProviderConfig {
 
 export interface TrialsConfig {
   repeat?: number
+  /** Maximum total trials in one real provider run (default 50, hard maximum 1000). */
+  maxTrials?: number
+  /** Maximum tools shown to a model in one real run (default 6, explicit override allowed). */
+  maxTools?: number
   permute?: boolean
   temperature?: number
   concurrency?: number

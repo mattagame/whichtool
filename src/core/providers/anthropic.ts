@@ -6,7 +6,7 @@ import {
   createProviderCacheFingerprint,
   reportableProviderHeaders,
 } from './cache-fingerprint.js'
-import { createJsonPoster, stripCredentials } from './http.js'
+import { createJsonPoster, DEFAULT_RETRIES, stripCredentials } from './http.js'
 import {
   ProviderError,
   recordToolCall,
@@ -101,6 +101,7 @@ export function createAnthropicProvider(options: AnthropicOptions): Provider {
   if (options.apiKey !== undefined && options.apiKey !== '') {
     headers['x-api-key'] = options.apiKey
   }
+  const retries = options.retries ?? DEFAULT_RETRIES
   const cacheFingerprint = createProviderCacheFingerprint({
     api: `anthropic-messages/${API_VERSION}`,
     model: options.model,
@@ -108,7 +109,7 @@ export function createAnthropicProvider(options: AnthropicOptions): Provider {
     headers,
     maxTokens,
     timeoutMs: options.timeoutMs ?? null,
-    retries: options.retries ?? null,
+    retries,
     capabilities,
   })
   const behaviorFingerprint = createProviderBehaviorFingerprint({
@@ -118,7 +119,7 @@ export function createAnthropicProvider(options: AnthropicOptions): Provider {
     headers: reportableProviderHeaders(headers),
     maxTokens,
     timeoutMs: options.timeoutMs ?? null,
-    retries: options.retries ?? null,
+    retries,
     capabilities,
   })
 
@@ -127,7 +128,7 @@ export function createAnthropicProvider(options: AnthropicOptions): Provider {
     headers,
     ...(options.fetch !== undefined ? { fetch: options.fetch } : {}),
     ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
-    ...(options.retries !== undefined ? { retries: options.retries } : {}),
+    retries,
   })
 
   const safeEndpoint = stripCredentials(endpoint)

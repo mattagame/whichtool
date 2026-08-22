@@ -15,7 +15,9 @@ with an advisory naming the affected versions.
 
 ## Supported versions
 
-Pre-1.0. Only the latest published version receives fixes.
+Pre-1.0. Publication is temporarily paused and the npm package may be unavailable. During
+the pause, fixes target the current source on `main`; after publication resumes, only the
+latest published version receives fixes.
 
 ## What whichtool does to the server you point it at
 
@@ -46,6 +48,31 @@ or unreleased product detail, that detail reaches the provider.
 Choose the provider accordingly. The OpenAI-compatible provider covers self-hosted
 endpoints (Ollama, vLLM) if the evaluation must stay on your hardware. No tool results are
 ever sent, because no tool is ever run.
+
+## Execution and cost controls
+
+Each selected task produces `repeat` trials; `repeat` defaults to 5. A real run accepts at
+most 50 total trials by default. The operator can raise that budget with `--max-trials` or
+`trials.maxTrials`, but 1,000 is an absolute, non-overridable maximum. Automatic retries are
+disabled by default for the built-in HTTP providers, so whichtool does not silently retry a
+failed provider request.
+
+`inspect` warns when a surface exposes more than 6 tools. Real CLI, MCP, and GitHub Action
+runs stop before a provider call above that default. An operator may raise the budget with
+`--max-tools`, `trials.maxTools`, the MCP startup flag, or the Action's `max-tools` input,
+but 1,000 tools is the absolute maximum. Six is a cautious guardrail, not a security boundary
+or a claim that every larger surface is unusable. Tool descriptions and schemas vary widely,
+so also enforce `--max-context-tokens`; tool count alone does not bound prompt size or cost.
+
+These are request-count controls, not a spending guarantee. `--dry-run` calls no model and
+shows a lower bound for prompt tokens, not a price estimate; output and reasoning tokens are
+additional and provider pricing can change. In MCP mode only the operator can set the trial
+budget. The GitHub Action applies `max-trials` per measured invocation, so a comparison that
+measures both head and base has two separate budgets.
+
+During a CLI run, `Ctrl+C` aborts in-flight provider requests and exits with code 130 without
+writing a partial report. MCP evaluations remain cancellable through the protocol. A remote
+provider may still have begun processing a request before it receives the cancellation.
 
 ## Credentials
 
@@ -81,9 +108,10 @@ single-turn routing benchmark, not execution of a complete agent workflow.
 Real provider calls are disabled by default. A blocked `run_evaluation` returns its trial and
 token plan as structured data; only the startup flag `--allow-paid-runs` grants the capability
 to proceed. The provider and model remain config-owned unless the separate
-`--allow-provider-overrides` capability is granted. Repeat, total-trial, and concurrency
-limits are enforced in code, including for a raw client that bypasses the advertised JSON
-Schema. `--result-file` is an operator-selected destination for the full report; the tool
+`--allow-provider-overrides` capability is granted. Repeat, total-trial, tool-count, and
+concurrency limits are enforced in code, including for a raw client that bypasses the
+advertised JSON Schema. Neither the trial nor tool budget can be raised by an agent tool
+call. `--result-file` is an operator-selected destination for the full report; the tool
 response omits per-trial payloads to protect model context. Persistent caching is disabled
 in MCP mode unless the operator explicitly starts it with `--cache`.
 
@@ -125,8 +153,8 @@ clear` removes it, and `--no-cache` skips it.
 
 ## What the static checks do and do not cover
 
-whichtool lints the surface for readability and coherence: token budget, annotations that
-contradict the names they sit on, indistinguishable descriptions, invalid `x-mcp-header`
-annotations. None of that is a security review. A surface can pass every check here and
-still expose an operation that should never have been exposed, or describe a destructive
-tool in reassuring language. Read the tools yourself.
+whichtool lints the surface for readability and coherence: token budget, a cautious warning
+above 6 tools, annotations that contradict the names they sit on, indistinguishable
+descriptions, and invalid `x-mcp-header` annotations. None of that is a security review. A
+surface can pass every check here and still expose an operation that should never have been
+exposed, or describe a destructive tool in reassuring language. Read the tools yourself.

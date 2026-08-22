@@ -16,7 +16,13 @@ import {
   META_SERVER_INFO,
 } from '../src/core/transport/mcp.js'
 import type { McpProcess } from '../src/core/transport/types.js'
-import { createFakeRuntime, fixturePath, REPO_ROOT, type FakeRuntimeOptions } from './helpers.js'
+import {
+  createFakeRuntime,
+  fixturePath,
+  readFixture,
+  REPO_ROOT,
+  type FakeRuntimeOptions,
+} from './helpers.js'
 
 const TASKS = join(REPO_ROOT, 'tests', 'fixtures', 'tasks', 'list-search.tasks.yaml')
 const CONFIG_PATH = 'mcp-test.config.json'
@@ -25,6 +31,25 @@ const SAFE_CONFIG = JSON.stringify({
   tasks: TASKS,
   provider: { name: 'mock' },
 })
+const SEVEN_TOOL_SURFACE = JSON.stringify({
+  tools: [
+    ...(readFixture('list-search-pair.json') as { tools: unknown[] }).tools,
+    ...Array.from({ length: 3 }, (_, index) => ({
+      name: `extra_${index + 1}`,
+      description: `Handle distinct extra workflow ${index + 1}.`,
+      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    })),
+  ],
+})
+const SEVEN_TOOL_CONFIG = JSON.stringify({
+  target: { transport: 'snapshot', path: 'seven-tools.json' },
+  tasks: TASKS,
+  provider: { name: 'mock' },
+})
+const SEVEN_TOOL_FILES = {
+  'seven-tools.json': SEVEN_TOOL_SURFACE,
+  'seven-tools.config.json': SEVEN_TOOL_CONFIG,
+}
 
 interface Reply {
   jsonrpc: string
@@ -370,7 +395,13 @@ describe('agent-facing MCP policy and result contracts', () => {
     const { replies } = await session([call(1, 'run_evaluation', { dryRun: true })])
     const structured = envelope(resultById(replies, 1))
     expect(structured.summary).toContain('No model was called')
-    expect(structured.data?.['trials']).toBe(50)
+    expect(structured.data).toMatchObject({
+      trials: 50,
+      maxTrials: 50,
+      hardMaxTrials: 1000,
+      withinTrialLimit: true,
+      promptTokenEstimate: 'lower-bound',
+    })
   })
 
   test('a real run is blocked with a machine-readable plan until the operator opts in', async () => {
@@ -406,7 +437,57 @@ describe('agent-facing MCP policy and result contracts', () => {
     expect(envelope(resultById(replies, 2)).error?.code).toBe('mcp/limit-exceeded')
   })
 
-  test('enforces the total trial limit before allocating or contacting a provider', async () => {
+  test('keeps the real-run budget operator-owned while allowing a safe preview', async () => {
+    const preview = await session([call(1, 'run_evaluation', { dryRun: true, repeat: 6 })])
+    expect(envelope(resultById(preview.replies, 1)).data).toMatchObject({
+      trials: 60,
+      maxTrials: 50,
+      withinTrialLimit: false,
+    })
+
+    const blocked = await session([call(2, 'run_evaluation', { repeat: 6 })], {
+      argv: ['--config', CONFIG_PATH, '--allow-paid-runs'],
+    })
+    expect(envelope(resultById(blocked.replies, 2)).error).toMatchObject({
+      code: 'mcp/trial-limit',
+      detail: { plan: { trials: 60, maxTrials: 50, withinTrialLimit: false } },
+    })
+
+    const allowed = await session([call(3, 'run_evaluation', { repeat: 6 })], {
+      argv: ['--config', CONFIG_PATH, '--allow-paid-runs', '--max-trials', '60'],
+    })
+    expect(envelope(resultById(allowed.replies, 3)).data).toMatchObject({ trialCount: 60 })
+  })
+
+  test('keeps the cautious tool limit operator-owned while allowing a safe preview', async () => {
+    const preview = await session([call(1, 'run_evaluation', { dryRun: true, repeat: 1 })], {
+      argv: ['--config', 'seven-tools.config.json'],
+      files: SEVEN_TOOL_FILES,
+    })
+    expect(envelope(resultById(preview.replies, 1)).data).toMatchObject({
+      trials: 10,
+      tools: 7,
+      maxTools: 6,
+      withinToolLimit: false,
+    })
+
+    const blocked = await session([call(2, 'run_evaluation', { repeat: 1 })], {
+      argv: ['--config', 'seven-tools.config.json', '--allow-paid-runs'],
+      files: SEVEN_TOOL_FILES,
+    })
+    expect(envelope(resultById(blocked.replies, 2)).error).toMatchObject({
+      code: 'mcp/tool-limit',
+      detail: { plan: { tools: 7, maxTools: 6, withinToolLimit: false } },
+    })
+
+    const allowed = await session([call(3, 'run_evaluation', { repeat: 1 })], {
+      argv: ['--config', 'seven-tools.config.json', '--allow-paid-runs', '--max-tools', '7'],
+      files: SEVEN_TOOL_FILES,
+    })
+    expect(envelope(resultById(allowed.replies, 3)).data).toMatchObject({ trialCount: 10 })
+  })
+
+  test('previews a plan above the absolute cap but never executes it', async () => {
     const tasks = Array.from({ length: 51 }, (_, index) => ({
       id: `large.${index}`,
       prompt: `List users for scenario ${index}`,
@@ -420,10 +501,22 @@ describe('agent-facing MCP policy and result contracts', () => {
           repeat: MCP_MAX_REPEAT,
           dryRun: true,
         }),
+        call(2, 'run_evaluation', {
+          tasks: 'large.tasks.json',
+          repeat: MCP_MAX_REPEAT,
+        }),
       ],
-      { files: { 'large.tasks.json': JSON.stringify({ version: 1, surface: null, tasks }) } },
+      {
+        argv: ['--config', CONFIG_PATH, '--allow-paid-runs'],
+        files: { 'large.tasks.json': JSON.stringify({ version: 1, surface: null, tasks }) },
+      },
     )
-    expect(envelope(resultById(replies, 1)).error?.code).toBe('mcp/limit-exceeded')
+    expect(envelope(resultById(replies, 1)).data).toMatchObject({
+      trials: 1020,
+      hardMaxTrials: 1000,
+      withinTrialLimit: false,
+    })
+    expect(envelope(resultById(replies, 2)).error?.code).toBe('mcp/limit-exceeded')
   })
 
   test('returns a compact summary and optionally stores the full report as an artifact', async () => {

@@ -241,6 +241,34 @@ describe('the CLI', () => {
     expect(runtime.err()).toContain('--force')
   })
 
+  test('`tasks generate` requires an explicit override above six tools before reading credentials', async () => {
+    const source = readFixture('clean.json') as { tools: unknown[] }
+    const runtime = createFakeRuntime({
+      files: {
+        'seven-tools.json': JSON.stringify({
+          tools: [
+            ...source.tools,
+            ...Array.from({ length: 3 }, (_, index) => ({
+              name: `extra_${index + 1}`,
+              description: `Handle extra workflow ${index + 1}.`,
+              inputSchema: { type: 'object', properties: {} },
+            })),
+          ],
+        }),
+      },
+    })
+    const code = await main(
+      ['tasks', 'generate', 'seven-tools.json', '--provider', 'openai', '--out', 'draft.yaml'],
+      runtime,
+    )
+
+    expect(code).toBe(EXIT.error)
+    expect(runtime.err()).toContain('7 tools')
+    expect(runtime.err()).toContain('--max-tools 7')
+    expect(runtime.err()).not.toContain('OPENAI_API_KEY')
+    expect(runtime.writes().size).toBe(0)
+  })
+
   test('`tasks mutate` will not write over the set it just read', async () => {
     const runtime = createFakeRuntime()
     const code = await main(

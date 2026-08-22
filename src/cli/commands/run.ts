@@ -1,5 +1,13 @@
 import { withCache } from '../../core/cache/provider.js'
-import { WhichtoolError } from '../../core/errors.js'
+import { CancellationError, WhichtoolError } from '../../core/errors.js'
+import {
+  ABSOLUTE_MAX_TOOLS,
+  ABSOLUTE_MAX_TRIALS,
+  assertMaxTools,
+  assertMaxTrials,
+  DEFAULT_MAX_TOOLS,
+  DEFAULT_MAX_TRIALS,
+} from '../../core/eval/options.js'
 import { planTrials } from '../../core/eval/planner.js'
 import { runTrials } from '../../core/eval/runner.js'
 import { scoreTrials } from '../../core/eval/scorer.js'
@@ -45,6 +53,16 @@ export const RUN_FLAGS: FlagSpecs = {
     placeholder: 'url',
   },
   repeat: { type: 'number', description: 'Trials per task (default 5)', placeholder: 'n' },
+  'max-trials': {
+    type: 'number',
+    description: `Maximum total trials in a real run (default ${DEFAULT_MAX_TRIALS}; hard max ${ABSOLUTE_MAX_TRIALS})`,
+    placeholder: 'n',
+  },
+  'max-tools': {
+    type: 'number',
+    description: `Maximum tools shown in a real run (default ${DEFAULT_MAX_TOOLS}; hard max ${ABSOLUTE_MAX_TOOLS})`,
+    placeholder: 'n',
+  },
   concurrency: { type: 'number', description: 'Trials in flight (default 4)', placeholder: 'n' },
   temperature: {
     type: 'number',
@@ -99,7 +117,10 @@ export const RUN_FLAGS: FlagSpecs = {
   },
   only: { type: 'string', description: 'Only tasks carrying this tag', placeholder: 'tag' },
   skip: { type: 'string', description: 'Skip tasks carrying this tag', placeholder: 'tag' },
-  'dry-run': { type: 'boolean', description: 'Count the trials and estimate cost; call no model' },
+  'dry-run': {
+    type: 'boolean',
+    description: 'Count trials and prompt tokens without calling a model',
+  },
   'seconds-per-trial': {
     type: 'number',
     description: 'Measured latency, so --dry-run can estimate wall-clock time too',
@@ -180,6 +201,12 @@ export async function runRun(runtime: Runtime, argv: readonly string[]): Promise
     })
     const concurrency =
       (flags['concurrency'] as number | undefined) ?? trialsConfig.concurrency ?? 4
+    const maxTrials = assertMaxTrials(
+      (flags['max-trials'] as number | undefined) ?? trialsConfig.maxTrials ?? DEFAULT_MAX_TRIALS,
+    )
+    const maxTools = assertMaxTools(
+      (flags['max-tools'] as number | undefined) ?? trialsConfig.maxTools ?? DEFAULT_MAX_TOOLS,
+    )
     const thresholds: RunThresholds = {
       minAccuracy: (flags['min-accuracy'] as number | undefined) ?? config.thresholds?.minAccuracy,
       maxOverTrigger:
@@ -198,29 +225,57 @@ export async function runRun(runtime: Runtime, argv: readonly string[]): Promise
       )
     }
 
-    // dry run
+    const estimate = estimateRun(plan, surface, selected, {
+      concurrency,
+      secondsPerTrial: flags['seconds-per-trial'] as number | undefined,
+    })
+
+    // A dry run is allowed to inspect a plan above either execution limit. It is the safe
+    // place to discover that a large task set multiplied by repeat is more work than intended.
     if (flags['dry-run'] === true) {
-      const estimate = estimateRun(plan, surface, selected, {
-        concurrency,
-        secondsPerTrial: flags['seconds-per-trial'] as number | undefined,
-      })
       const lines = [
         'whichtool run --dry-run',
         `  tasks        ${selected.length} selected of ${taskSet.tasks.length} in ${taskSet.source}`,
         `  trials       ${estimate.trials} = ${selected.length} x ${plan.repeat} repeats`,
-        `  per trial    ~${estimate.promptTokensPerTrial} prompt tokens (surface ${surface.tokens.total} + task text)`,
-        `  total        ~${estimate.totalPromptTokens} prompt tokens sent, at concurrency ${estimate.concurrency}`,
+        `  prompt floor ~${estimate.promptTokensPerTrial} tokens per trial (surface ${surface.tokens.total} + task text)`,
+        `  cold total   ~${estimate.totalPromptTokens} prompt tokens at concurrency ${estimate.concurrency}`,
+        `  safety limit ${maxTrials} trials for a real run (hard maximum ${ABSOLUTE_MAX_TRIALS})`,
+        estimate.trials <= maxTrials
+          ? '  real run     within the configured trial limit'
+          : `  real run     BLOCKED until --max-trials is raised to at least ${estimate.trials}`,
+        `  tool limit   ${maxTools} tools for a real run (hard maximum ${ABSOLUTE_MAX_TOOLS})`,
+        surface.tools.length <= maxTools
+          ? '  tool check   within the configured tool limit'
+          : `  tool check   BLOCKED until --max-tools is raised to at least ${surface.tools.length}`,
         estimate.estimatedSeconds === null
           ? '  wall clock   unknown: pass --seconds-per-trial with a measured figure to estimate it'
           : `  wall clock   ~${Math.ceil(estimate.estimatedSeconds / 60)} min at ${flags['seconds-per-trial'] as number}s per trial`,
         '',
-        '  Completion tokens are not estimated: they depend on the model, and a reasoning',
-        '  model can spend far more thinking than the prompt costs. No model was called.',
+        '  Prompt tokens are a lower bound, not a price estimate. Output and reasoning tokens',
+        '  can be much higher. Built-in provider calls are not retried automatically.',
+        '  No model was called.',
         '',
       ]
       runtime.writeOut(lines.join('\n'))
       return 0
     }
+
+    if (surface.tools.length > maxTools) {
+      throw new WhichtoolError(
+        'run/tool-limit',
+        `Surface exposes ${surface.tools.length} tools, above the configured limit of ${maxTools}.`,
+        `More tools are not always wrong, but they can increase prompt cost and routing confusion. Review --dry-run and inspect output, then pass --max-tools ${surface.tools.length} if this surface is intentional. The hard maximum is ${ABSOLUTE_MAX_TOOLS}.`,
+      )
+    }
+
+    if (plan.trials.length > maxTrials) {
+      throw new WhichtoolError(
+        'run/trial-limit',
+        `Run plans ${plan.trials.length} trials, above the configured limit of ${maxTrials}.`,
+        `Review it with --dry-run, then pass --max-trials ${plan.trials.length} if acceptable. The hard maximum is ${ABSOLUTE_MAX_TRIALS}.`,
+      )
+    }
+    if (runtime.signal?.aborted === true) throw new CancellationError()
 
     // the run
     const reasoningEffort =
@@ -246,7 +301,18 @@ export async function runRun(runtime: Runtime, argv: readonly string[]): Promise
       (flags['temperature'] as number | undefined) ?? trialsConfig.temperature ?? 0
     const showProgress = runtime.isStdoutTTY()
 
-    const runnerOptions: Parameters<typeof runTrials>[4] = { concurrency, temperature }
+    runtime.writeErr(
+      `whichtool: running ${estimate.trials} trials against ${sanitizeText(rawProvider.id)}/${sanitizeText(rawProvider.model)}; ` +
+        `cold-cache prompt floor ~${estimate.totalPromptTokens} tokens. Output and reasoning are additional.\n`,
+    )
+
+    const runnerOptions: Parameters<typeof runTrials>[4] = {
+      concurrency,
+      maxTools,
+      maxTrials,
+      signal: runtime.signal,
+      temperature,
+    }
     if (showProgress) {
       runnerOptions.onTrial = (outcome, completed, total) => {
         const verdict = outcome.error !== undefined ? 'error' : (outcome.pick ?? '(none)')
@@ -257,6 +323,11 @@ export async function runRun(runtime: Runtime, argv: readonly string[]): Promise
     }
 
     const executed = await runTrials(plan, selected, surface.tools, provider, runnerOptions)
+    if (executed.cancelled) {
+      throw new CancellationError(
+        `Run cancelled after ${executed.outcomes.length} of ${plan.trials.length} trials. No report was written.`,
+      )
+    }
     const scored = scoreTrials(executed.outcomes, surface.tools)
 
     const cacheDiagnostics: Diagnostic[] = []

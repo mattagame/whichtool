@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { EXIT, main } from '../src/cli/run.js'
+import { WhichtoolError } from '../src/core/errors.js'
 import { planTrials } from '../src/core/eval/planner.js'
 import { runTrials } from '../src/core/eval/runner.js'
 import { scoreTrials } from '../src/core/eval/scorer.js'
@@ -12,10 +13,40 @@ import { buildRunReport, estimateRun, RUN_SCHEMA_VERSION } from '../src/core/run
 import { loadSurface } from '../src/core/surface/fetch.js'
 import { parseTaskSet } from '../src/core/tasks/load.js'
 import { snapshotTransportFromData } from '../src/core/transport/index.js'
-import { createFakeRuntime, fixturePath, readFixture, REPO_ROOT } from './helpers.js'
+import { caught, createFakeRuntime, fixturePath, readFixture, REPO_ROOT } from './helpers.js'
 import type { FakeRuntimeOptions } from './helpers.js'
 
 const TASKS_FILE = join(REPO_ROOT, 'tests', 'fixtures', 'tasks', 'list-search.tasks.yaml')
+const SEVEN_TOOL_SURFACE = JSON.stringify({
+  tools: Array.from({ length: 7 }, (_, index) => ({
+    name: `operation_${index + 1}`,
+    description: `Handle the distinct workflow numbered ${index + 1}.`,
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
+  })),
+})
+const SEVEN_TOOL_TASKS = JSON.stringify({
+  version: 1,
+  surface: null,
+  tasks: [
+    ...Array.from({ length: 7 }, (_, index) => ({
+      id: `operation.${index + 1}`,
+      prompt: `Run the distinct workflow numbered ${index + 1}.`,
+      expected: `operation_${index + 1}`,
+      tags: [],
+    })),
+    { id: 'operation.none', prompt: 'Do something outside these workflows.', expected: null },
+  ],
+})
+const SEVEN_TOOL_FILES = {
+  'seven-tools.json': SEVEN_TOOL_SURFACE,
+  'seven-tools.tasks.json': SEVEN_TOOL_TASKS,
+}
 
 async function fullRun(
   provider: ReturnType<typeof createKeywordProvider>,
@@ -334,6 +365,40 @@ describe('estimateRun', () => {
   })
 })
 
+test('runTrials enforces its defensive ceiling before calling the provider', async () => {
+  const surface = await loadSurface(
+    snapshotTransportFromData(readFixture('list-search-pair.json'), 's'),
+  )
+  const taskSet = parseTaskSet(readFileSync(TASKS_FILE, 'utf8'), TASKS_FILE)
+  const plan = planTrials(taskSet.tasks, surface.tools, { repeat: 1 })
+  const provider = competentProvider()
+
+  const error = await caught(
+    runTrials(plan, taskSet.tasks, surface.tools, provider, { maxTrials: 9 }),
+  )
+
+  expect(error).toBeInstanceOf(WhichtoolError)
+  expect((error as WhichtoolError).code).toBe('trials/limit-exceeded')
+  expect(provider.calls).toHaveLength(0)
+})
+
+test('runTrials enforces its defensive tool ceiling before calling the provider', async () => {
+  const surface = await loadSurface(
+    snapshotTransportFromData(readFixture('list-search-pair.json'), 's'),
+  )
+  const taskSet = parseTaskSet(readFileSync(TASKS_FILE, 'utf8'), TASKS_FILE)
+  const plan = planTrials(taskSet.tasks, surface.tools, { repeat: 1 })
+  const provider = competentProvider()
+
+  const error = await caught(
+    runTrials(plan, taskSet.tasks, surface.tools, provider, { maxTools: 3 }),
+  )
+
+  expect(error).toBeInstanceOf(WhichtoolError)
+  expect((error as WhichtoolError).code).toBe('trials/tool-limit-exceeded')
+  expect(provider.calls).toHaveLength(0)
+})
+
 test('provider cancellation keeps the request timeout in place', async () => {
   let sentSignal: AbortSignal | null | undefined
   const provider = createOpenAiCompatibleProvider({
@@ -420,6 +485,25 @@ describe('the CLI', () => {
     expect(out).toContain('No model was called.')
   })
 
+  test('`run --dry-run` previews a plan above the default limit and labels the estimate', async () => {
+    const { code, out } = await cli([
+      'run',
+      fixturePath('list-search-pair.json'),
+      '--tasks',
+      TASKS_FILE,
+      '--repeat',
+      '6',
+      '--dry-run',
+    ])
+
+    expect(code).toBe(EXIT.ok)
+    expect(out).toContain('trials       60')
+    expect(out).toMatch(/lower bound/i)
+    expect(out).toMatch(/blocked/i)
+    expect(out).toContain('--max-trials')
+    expect(out).toContain('No model was called.')
+  })
+
   test('`run --dry-run --seconds-per-trial` estimates the time too', async () => {
     const { out } = await cli([
       'run',
@@ -435,6 +519,62 @@ describe('the CLI', () => {
       '50',
     ])
     expect(out).toContain('wall clock   ~5 min')
+  })
+
+  test('a seven-tool dry run warns that real execution needs an explicit override', async () => {
+    const blocked = await cli(
+      [
+        'run',
+        'seven-tools.json',
+        '--tasks',
+        'seven-tools.tasks.json',
+        '--repeat',
+        '1',
+        '--dry-run',
+      ],
+      { files: SEVEN_TOOL_FILES },
+    )
+    expect(blocked.code).toBe(EXIT.ok)
+    expect(blocked.out).toContain('tool limit   6')
+    expect(blocked.out).toContain('BLOCKED until --max-tools is raised to at least 7')
+
+    const reviewed = await cli(
+      [
+        'run',
+        'seven-tools.json',
+        '--tasks',
+        'seven-tools.tasks.json',
+        '--repeat',
+        '1',
+        '--max-tools',
+        '7',
+        '--dry-run',
+      ],
+      { files: SEVEN_TOOL_FILES },
+    )
+    expect(reviewed.code).toBe(EXIT.ok)
+    expect(reviewed.out).toContain('tool check   within the configured tool limit')
+  })
+
+  test('a real run above six tools is blocked before provider credentials are read', async () => {
+    const { code, err } = await cli(
+      [
+        'run',
+        'seven-tools.json',
+        '--tasks',
+        'seven-tools.tasks.json',
+        '--provider',
+        'openai',
+        '--repeat',
+        '1',
+      ],
+      { files: SEVEN_TOOL_FILES },
+    )
+
+    expect(code).toBe(EXIT.error)
+    expect(err).toContain('7 tools')
+    expect(err).toContain('--max-tools 7')
+    expect(err).not.toContain('OPENAI_API_KEY')
   })
 
   test('`run` with the mock provider produces a full report', async () => {
@@ -453,6 +593,97 @@ describe('the CLI', () => {
     expect(out).toContain('Confusion pairs')
     // The default mock abstains on everything, so that is what the report must show.
     expect(out).toContain('abstention')
+  })
+
+  test('a cancelled CLI run exits 130 and writes no report', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    const { code, out, err } = await cli(
+      [
+        'run',
+        fixturePath('list-search-pair.json'),
+        '--tasks',
+        TASKS_FILE,
+        '--provider',
+        'mock',
+        '--repeat',
+        '1',
+      ],
+      { signal: controller.signal },
+    )
+
+    expect(code).toBe(EXIT.cancelled)
+    expect(out).toBe('')
+    expect(err).toContain('Operation cancelled')
+  })
+
+  test('a real run permits exactly 50 trials by default', async () => {
+    const { code, out } = await cli([
+      'run',
+      fixturePath('list-search-pair.json'),
+      '--tasks',
+      TASKS_FILE,
+      '--provider',
+      'mock',
+      '--repeat',
+      '5',
+    ])
+
+    expect(code).toBe(EXIT.ok)
+    expect(out).toMatch(/trials\s+50\b/)
+  })
+
+  test('a real run above 50 is blocked before provider credentials are read', async () => {
+    const { code, err } = await cli([
+      'run',
+      fixturePath('list-search-pair.json'),
+      '--tasks',
+      TASKS_FILE,
+      '--provider',
+      'openai',
+      '--repeat',
+      '6',
+    ])
+
+    expect(code).toBe(EXIT.error)
+    expect(err).toContain('60 trials')
+    expect(err).toContain('50')
+    expect(err).toContain('--max-trials')
+    expect(err).not.toContain('OPENAI_API_KEY')
+  })
+
+  test('an explicit trial limit permits a larger run within the hard maximum', async () => {
+    const { code, out } = await cli([
+      'run',
+      fixturePath('list-search-pair.json'),
+      '--tasks',
+      TASKS_FILE,
+      '--provider',
+      'mock',
+      '--repeat',
+      '6',
+      '--max-trials',
+      '60',
+    ])
+
+    expect(code).toBe(EXIT.ok)
+    expect(out).toMatch(/trials\s+60\b/)
+  })
+
+  test('the absolute trial limit cannot be raised above 1000', async () => {
+    const { code, err } = await cli([
+      'run',
+      fixturePath('list-search-pair.json'),
+      '--tasks',
+      TASKS_FILE,
+      '--max-trials',
+      '1001',
+      '--dry-run',
+    ])
+
+    expect(code).toBe(EXIT.error)
+    expect(err).toContain('maxTrials')
+    expect(err).toContain('1000')
   })
 
   test('`run` and `report` exit 1 for an error diagnostic on an otherwise healthy run', async () => {
@@ -563,6 +794,8 @@ describe('the CLI', () => {
     expect(code).toBe(EXIT.ok)
     expect(out).toContain('whichtool run <target>')
     expect(out).toContain('--min-accuracy')
+    expect(out).toContain('--max-trials')
+    expect(out).toContain('--max-tools')
     expect(out).toContain('--no-cache')
     expect(out).toContain('never executes a tool')
   })

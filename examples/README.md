@@ -1,5 +1,10 @@
 # Examples
 
+> [!WARNING]
+> npm publication is temporarily paused, so the package may be unavailable. The registry
+> commands in these examples are retained for a possible future republication. For now,
+> clone the public repository and run the CLI from source as described under “Running them.”
+
 | Directory                            | What it is for                                                                                        |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | [quickstart](quickstart)             | The whole loop — inspect, lint, dry-run, run, report, diff — on files in the directory. Start here.   |
@@ -10,7 +15,7 @@
 ## The two to read
 
 **[quickstart](quickstart)** — because it contains the complete reproducible path on local
-files: inspect the surface, lint a reviewed task set, dry-run the cost, measure, re-render,
+files: inspect the surface, lint a reviewed task set, preview the prompt workload, measure, re-render,
 and compare two saved runs. Use it to learn the mechanics before connecting a live server
 or hosted provider.
 
@@ -43,3 +48,7 @@ registry rather than to your working tree. (`bun run dev` executes from the repo
 root, so the flag-less commands above would not find the example's config from there.)
 
 The `inspect`, `tasks lint` and `--dry-run` paths need no API key, no model and no network.
+Dry-run prompt tokens are a lower bound, not a price estimate: output and reasoning tokens
+are additional. Real runs allow 50 total trials and 6 tools by default, and never more than
+1,000 of either. `inspect` only warns above 6 tools; that cautious default is not universal,
+so review both the surface and its context-token budget before raising `--max-tools`.

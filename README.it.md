@@ -8,6 +8,19 @@
 
 [English](README.md)
 
+> [!WARNING]
+> **La pubblicazione è temporaneamente sospesa.** Le release automatiche sono disabilitate
+> e il pacchetto npm potrebbe non essere disponibile, mentre il repository pubblico su
+> GitHub resta online. Le istruzioni per registry e Action qui sotto restano intenzionalmente
+> in vista di un'eventuale ripubblicazione. Per usare ora il sorgente corrente:
+>
+> ```bash
+> git clone https://github.com/mattagame/whichtool.git
+> cd whichtool
+> bun install
+> bun run ./src/cli/main.ts inspect ./tools.json
+> ```
+
 Un server MCP può avere schemi validi e restare illeggibile per un modello. Pubblichi `list_users` e `search_users` con descrizioni simili e il modello tira a indovinare. La validazione degli schemi passa. Passano anche i test di integrazione, perché chiamano il tool giusto per costruzione.
 
 whichtool mette quella surface davanti a un modello vero e riporta **quale tool viene scelto** e **quali coppie vengono confuse**.
@@ -28,6 +41,15 @@ Due lavori:
 - **`inspect`** — budget di token, annotazioni contraddittorie, descrizioni quasi identiche, `x-mcp-header` invalidi. Nessuna chiamata al modello né chiave del provider; un target live può comunque richiedere la propria autorizzazione.
 - **`run`** — trial, ordine dei tool permutato, matrice di confusione, tassi con intervalli di Wilson al 95%.
 
+`inspect` avvisa quando una surface espone più di 6 tool. Le run reali da CLI, MCP e GitHub
+Action si fermano prima di chiamare il modello oltre questo limite predefinito. Dopo aver
+verificato la surface, l'operatore può alzarlo con `--max-tools N`, `trials.maxTools`, il flag
+di avvio MCP o l'input `max-tools` dell'Action; 1.000 è il massimo assoluto. Sei è un default
+prudenziale, non una regola universale: più tool possono aumentare ambiguità e dimensione
+del prompt, ma il numero giusto dipende da modello, schemi, descrizioni e task. Imposta anche
+`--max-context-tokens`, così pochi tool insolitamente grandi non aggirano il budget di
+contesto.
+
 Gli intervalli di Wilson descrivono la stabilità a livello di trial sui task nel file.
 Ripetere un task misura se quella stessa scelta di routing è stabile; non stima le prestazioni
 del modello su intenti mai visti.
@@ -47,8 +69,9 @@ Richiede Node 20.11+ o Bun 1.3+. Zero dipendenze a runtime.
 
 I binari standalone non vengono ancora pubblicati. Gli eseguibili compilati con Bun
 incorporano componenti runtime di terze parti, quindi la distribuzione resta disabilitata
-finché le relative notice non saranno verificate e incluse con ogni binario. Nel frattempo
-usa `npx` o il container.
+finché le relative notice non saranno verificate e incluse con ogni binario. Questo è
+separato dalla sospensione temporanea del pacchetto indicata sopra; durante la sospensione
+usa il checkout del sorgente.
 
 ## Avvio rapido
 
@@ -93,13 +116,27 @@ whichtool tasks mutate --out whichtool.tasks.mutated.yaml --seed 0
 # 3. Lint prima di spendere
 whichtool tasks lint ./tools.json --tasks ./whichtool.tasks.yaml
 
-# 4. Stima del costo (nessuna chiamata al modello)
+# 4. Anteprima del carico (nessuna chiamata al modello)
 whichtool run ./tools.json --provider ollama --model qwen3:4b --repeat 5 --dry-run
 
 # 5. Misura
 whichtool run ./tools.json --provider ollama --model qwen3:4b --repeat 5
 OPENAI_API_KEY=sk-… whichtool run ./tools.json --provider openai --model gpt-4.1-mini
 ```
+
+`--repeat` vale di default 5 **per ogni task selezionato**: i trial totali sono quindi i task
+rimasti dopo `--only` / `--skip`, moltiplicati per `repeat`. Per impostazione predefinita una
+run reale rifiuta più di 50 trial totali. Dopo aver controllato `--dry-run`, puoi alzare il
+budget con `--max-trials N` o `trials.maxTrials`; 1.000 è il massimo assoluto e non
+aggirabile.
+
+Il numero di token del prompt mostrato dal dry-run è un limite inferiore, non una stima del
+prezzo. I token di output e reasoning sono aggiuntivi e possono essere molti di più. I retry
+automatici sono disabilitati di default nei provider HTTP inclusi.
+
+Durante `whichtool run`, premi `Ctrl+C` per annullare le richieste al provider ancora in
+corso. Il comando termina con codice `130` e non scrive un report parziale. Le valutazioni
+MCP restano annullabili tramite il protocollo MCP.
 
 Codici di uscita: `0` esecuzione sana e soglie rispettate, `1` una soglia qualitativa è
 fallita, `2` errore di esecuzione (inclusi run incompleti o troppi errori del provider). Di
@@ -137,7 +174,7 @@ anche quando la prima scelta non cambia.
 `whichtool <command> --help` elenca i flag. I principali di `run`:
 
 ```
---tasks --provider --model --repeat --concurrency --temperature --seed
+--tasks --provider --model --repeat --max-trials --max-tools --concurrency --temperature --seed
 --min-scored --max-error-rate
 --permute / --no-permute --format --out --min-accuracy --max-over-trigger
 --max-context-tokens --only --skip --dry-run --seconds-per-trial --reasoning-effort
@@ -173,7 +210,14 @@ export default defineConfig({
   target: { transport: 'stdio', command: 'bun run ./src/server.ts' },
   tasks: './whichtool.tasks.yaml',
   provider: { name: 'ollama', model: 'qwen3:4b' },
-  trials: { repeat: 5, permute: true, temperature: 0, concurrency: 4 },
+  trials: {
+    repeat: 5,
+    maxTrials: 50,
+    maxTools: 6,
+    permute: true,
+    temperature: 0,
+    concurrency: 4,
+  },
   thresholds: {
     minAccuracy: 0.9,
     maxOverTrigger: 0.05,
@@ -198,6 +242,8 @@ non lo fa, come spiegato qui sotto.
     tasks: ./whichtool.tasks.yaml
     provider: openai
     model: gpt-4.1-mini
+    max-trials: '50'
+    max-tools: '6'
     min-accuracy: '0.9'
     max-over-trigger: '0.05'
 ```
@@ -205,6 +251,11 @@ non lo fa, come spiegato qui sotto.
 Nella composite action la cache dei trial è disabilitata di default perché può contenere prompt, definizioni dei
 tool e risposte del provider. Imposta `cache: 'true'` solo se questi dati non sono sensibili
 e la persistenza su GitHub è accettabile.
+
+L'Action blocca per default una misurazione con più di 6 tool; `max-tools` può alzare il
+limite solo fino a 1.000. Il budget `max-trials` si applica a ogni singola misurazione. Un
+workflow di confronto che misura sia head sia base può quindi usare il budget dei trial una
+volta per ogni run: con il default, al massimo 50 trial per head e 50 per base.
 
 Ometti `provider` per eseguire solo il passaggio statico gratuito: `inspect`, piu `tasks lint` se esiste un task set. Un workflow completo (incluso il confronto col branch di base, scritto nel job summary) è in [examples/github-action](examples/github-action).
 
@@ -233,8 +284,13 @@ revisionati: `inspect_surface`, `validate_task_file`, `run_evaluation`, quindi
 Espone lo stesso benchmark single-turn di routing; non valuta né esegue il workflow completo
 di un agente.
 `run_evaluation` può sempre produrre un piano dry-run, ma contatta un provider solo se
-l'operatore avvia il server con `--allow-paid-runs`; anche ripetizioni, trial totali e
-concorrenza hanno limiti rigidi. Una run completa restituisce un riepilogo compatto.
+l'operatore avvia il server con `--allow-paid-runs`. Il budget delle run reali, controllato
+dall'operatore, è di 50 trial totali per default; solo il flag di avvio `--max-trials` o
+`trials.maxTrials` nella config verificata possono alzarlo, fino al massimo assoluto di 1.000.
+L'agente non può modificare quel budget. La stessa regola controllata dall'operatore vale
+per il default di 6 tool tramite `--max-tools` all'avvio o `trials.maxTools`, con un massimo
+assoluto di 1.000. Anche ripetizioni e concorrenza hanno limiti. Una run completa restituisce
+un riepilogo compatto.
 Aggiungi `--result-file ./latest-run.json` per conservare il report completo fuori dal
 contesto del modello. `--allow-dynamic-targets` è un opt-in non sicuro, pensato per ambienti
 di sviluppo isolati. Anche provider e modello restano quelli della config, a meno che
@@ -251,7 +307,10 @@ chiamate e risposte possono essere scritti su disco.
 | [ollama-qwen3](examples/ollama-qwen3)         | Un run locale in disaccordo col lint statico. |
 | [github-action](examples/github-action)       | Wiring CI con diff sul branch di base.        |
 
-Su modelli reasoning come qwen3 un singolo trial può richiedere decine di secondi di thinking token che whichtool non legge. Misura un trial, poi passa `--dry-run --seconds-per-trial`.
+Su modelli reasoning come qwen3 un singolo trial può richiedere decine di secondi di thinking
+token che whichtool non legge. Misura un trial, poi passa `--dry-run --seconds-per-trial`. Il
+totale dei token del prompt resta un limite inferiore, non una stima del prezzo; i token di
+output e reasoning sono aggiuntivi.
 
 ## Sviluppo
 
@@ -277,7 +336,7 @@ Specifiche: [SPEC.md](SPEC.md). Sicurezza: [SECURITY.md](SECURITY.md). Contratto
 
 Il software è fornito così com'è, senza garanzia. Vedi [LICENSE.md](LICENSE.md).
 
-- **`run` può costare** sui provider hosted. Definizioni dei tool e prompt vanno al modello che configuri. Usa `--dry-run` prima. Ollama e gli endpoint locali restano sulla tua macchina.
+- **`run` può costare** sui provider hosted. Definizioni dei tool e prompt vanno al modello che configuri. Usa prima `--dry-run`, ma considera il numero di token del prompt un limite inferiore e non una stima del prezzo. Ollama e gli endpoint locali restano sulla tua macchina.
 - **I tool del server sotto esame non vengono mai invocati.** `stdio` lancia il comando che passi, con i tuoi privilegi: trattalo come codice.
 - **I binari standalone non sono ancora distribuiti.** La pubblicazione resta disabilitata finché le notice delle dipendenze incorporate non saranno verificate e incluse con ogni binario.
 - **Non è uno scanner di sicurezza.** Una surface può superare `inspect` e restare pericolosa. Dettagli: [SECURITY.md](SECURITY.md).

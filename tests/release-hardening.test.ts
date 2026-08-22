@@ -44,7 +44,18 @@ describe('release hardening', () => {
     expect(build).toContain("'--no-compile-autoload-bunfig'")
   })
 
-  test('a release is main-only and npm publishing uses short-lived OIDC credentials', () => {
+  test('the release template cannot publish from tags or a manual run while paused', () => {
+    const workflow = repositoryFile('.github/workflows/release.yml')
+    expect(workflow).toContain('PUBLICATION IS PAUSED')
+    expect(workflow).toContain('workflow_dispatch:')
+    expect(workflow).not.toMatch(/\n\s+push:\s*\n\s+tags:/)
+
+    for (const job of ['verify', 'quality', 'npm', 'container', 'release']) {
+      expect(workflowJob(workflow, job)).toMatch(/^\s*if: \$\{\{ false \}\}/)
+    }
+  })
+
+  test('the suspended release template stays main-only and uses short-lived npm credentials', () => {
     const workflow = repositoryFile('.github/workflows/release.yml')
     const npm = workflowJob(workflow, 'npm')
     expect(workflow).toContain('git merge-base --is-ancestor "$GITHUB_SHA" origin/main')
@@ -121,6 +132,20 @@ describe('release hardening', () => {
     expect(action).toContain('key: whichtool-v1-${{ github.ref }}-')
     expect(action).toContain('args+=(--no-cache)')
     expect(action).not.toContain('restore-keys:')
+  })
+
+  test('the composite action caps each paid invocation before it calls a provider', () => {
+    const action = repositoryFile('action.yml')
+    expect(action).toMatch(/max-trials:\s+description:[\s\S]*?default: '50'/)
+    expect(action).toMatch(/max-tools:\s+description:[\s\S]*?default: '6'/)
+    expect(action).toContain('${{ inputs.max-trials }}')
+    expect(action).toContain('${{ inputs.max-tools }}')
+    expect(action).toContain('maxTrials > 1000')
+    expect(action).toContain('maxTools > 1000')
+    expect(action).toContain('process.exitCode = 2')
+    expect(action.indexOf('- name: Check the trial budget')).toBeLessThan(
+      action.indexOf('- name: Run the trials'),
+    )
   })
 
   test('Docker excludes local credentials and gives the runtime user a writable workdir', () => {

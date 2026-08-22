@@ -1,4 +1,5 @@
 import { isJsonObject } from './json.js'
+import { DEFAULT_MAX_TOOLS } from './eval/options.js'
 import {
   analyzeAnnotations,
   classifyName,
@@ -154,6 +155,16 @@ export function buildInspectReport(surface: Surface, options: InspectOptions = {
 
   const analysisDiagnostics: Diagnostic[] = [
     ...surface.diagnostics,
+    ...(surface.tools.length > DEFAULT_MAX_TOOLS
+      ? [
+          {
+            code: 'surface/large-tool-set',
+            severity: 'warning' as const,
+            message: `Surface exposes ${surface.tools.length} tools, above the cautious ${DEFAULT_MAX_TOOLS}-tool review threshold. This is not a universal model limit, but larger choices can increase prompt cost and routing confusion; inspect the overlap findings and require an explicit override before a measured run.`,
+            detail: { actual: surface.tools.length, reviewThreshold: DEFAULT_MAX_TOOLS },
+          },
+        ]
+      : []),
     ...annotations.diagnostics,
     ...overlap.diagnostics,
     ...deprecations.diagnostics,

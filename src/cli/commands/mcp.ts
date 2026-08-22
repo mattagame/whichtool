@@ -3,6 +3,14 @@ import type { WhichtoolConfig } from '../../config.js'
 import { withCache } from '../../core/cache/provider.js'
 import { diffRuns, parseRunReport, type RunDiff } from '../../core/diff.js'
 import { WhichtoolError } from '../../core/errors.js'
+import {
+  ABSOLUTE_MAX_TOOLS,
+  ABSOLUTE_MAX_TRIALS,
+  assertMaxTools,
+  assertMaxTrials,
+  DEFAULT_MAX_TOOLS,
+  DEFAULT_MAX_TRIALS,
+} from '../../core/eval/options.js'
 import { planTrials } from '../../core/eval/planner.js'
 import { runTrials } from '../../core/eval/runner.js'
 import { scoreTrials } from '../../core/eval/scorer.js'
@@ -11,6 +19,7 @@ import { isJsonObject } from '../../core/json.js'
 import {
   MCP_MAX_CONCURRENCY,
   MCP_MAX_REPEAT,
+  MCP_MAX_TOOLS,
   MCP_MAX_TRIALS,
   MCP_SERVER_TOOLS,
 } from '../../core/mcp-server/tools.js'
@@ -56,6 +65,16 @@ export const MCP_FLAGS: FlagSpecs = {
   'allow-paid-runs': {
     type: 'boolean',
     description: 'Opt in to real provider calls; otherwise run_evaluation is dry-run only',
+  },
+  'max-trials': {
+    type: 'number',
+    description: `Operator limit for one real evaluation (default ${DEFAULT_MAX_TRIALS}; hard max ${ABSOLUTE_MAX_TRIALS})`,
+    placeholder: 'n',
+  },
+  'max-tools': {
+    type: 'number',
+    description: `Operator limit for tools shown in one real evaluation (default ${DEFAULT_MAX_TOOLS}; hard max ${ABSOLUTE_MAX_TOOLS})`,
+    placeholder: 'n',
   },
   'allow-provider-overrides': {
     type: 'boolean',
@@ -118,6 +137,8 @@ function boundedText(value: string): string {
 
 interface McpPolicy {
   config: WhichtoolConfig
+  maxTrials: number
+  maxTools: number
   cacheEnabled: boolean
   allowDynamicTargets: boolean
   allowPaidRuns: boolean
@@ -617,13 +638,6 @@ async function callTool(
         const rawRepeat = numberArg(args, 'repeat') ?? policy.config.trials?.repeat ?? 5
         const repeat = integerInRange('repeat', rawRepeat, 1, MCP_MAX_REPEAT)
         const plannedTrials = taskSet.tasks.length * repeat
-        if (plannedTrials > MCP_MAX_TRIALS) {
-          throw new WhichtoolError(
-            'mcp/limit-exceeded',
-            `The plan contains ${plannedTrials} trials; the MCP hard limit is ${MCP_MAX_TRIALS}.`,
-            'Reduce the task set or repeat count and dry-run again.',
-          )
-        }
         const rawConcurrency =
           numberArg(args, 'concurrency') ?? policy.config.trials?.concurrency ?? 4
         const concurrency = integerInRange('concurrency', rawConcurrency, 1, MCP_MAX_CONCURRENCY)
@@ -637,6 +651,14 @@ async function callTool(
         const estimate = estimateRun(plan, surface, taskSet.tasks, { concurrency })
         const planSummary: JsonObject = {
           ...(estimate as unknown as JsonObject),
+          tools: surface.tools.length,
+          promptTokenEstimate: 'lower-bound',
+          maxTrials: policy.maxTrials,
+          hardMaxTrials: MCP_MAX_TRIALS,
+          withinTrialLimit: plannedTrials <= policy.maxTrials,
+          maxTools: policy.maxTools,
+          hardMaxTools: MCP_MAX_TOOLS,
+          withinToolLimit: surface.tools.length <= policy.maxTools,
           provider: {
             name: requestedProvider ?? policy.config.provider?.name ?? null,
             model: requestedModel ?? policy.config.provider?.model ?? null,
@@ -647,7 +669,43 @@ async function callTool(
         if (booleanArg(args, 'dryRun') === true) {
           return successful(
             planSummary,
-            `${estimate.trials} trials would be run, sending about ${estimate.totalPromptTokens} prompt tokens. No model was called.`,
+            `${estimate.trials} trials across ${surface.tools.length} tools would be run. The prompt-token lower bound is about ${estimate.totalPromptTokens}; output and reasoning tokens are additional. ${plannedTrials <= policy.maxTrials && surface.tools.length <= policy.maxTools ? 'A real run is within the operator limits.' : 'A real run is blocked by an operator limit.'} No model was called.`,
+          )
+        }
+
+        if (surface.tools.length > MCP_MAX_TOOLS) {
+          return failed(
+            'mcp/limit-exceeded',
+            `The surface contains ${surface.tools.length} tools; the hard limit is ${MCP_MAX_TOOLS}.`,
+            'Reduce or split the surface. The hard limit cannot be overridden.',
+            { plan: planSummary },
+          )
+        }
+
+        if (surface.tools.length > policy.maxTools) {
+          return failed(
+            'mcp/tool-limit',
+            `The surface contains ${surface.tools.length} tools; the operator limit is ${policy.maxTools}.`,
+            `Review inspect_surface and a dry run, then have the operator restart whichtool with --max-tools ${surface.tools.length} if the surface is intentional.`,
+            { plan: planSummary },
+          )
+        }
+
+        if (plannedTrials > MCP_MAX_TRIALS) {
+          return failed(
+            'mcp/limit-exceeded',
+            `The plan contains ${plannedTrials} trials; the hard limit is ${MCP_MAX_TRIALS}.`,
+            'Reduce the task set or repeat count. The hard limit cannot be overridden.',
+            { plan: planSummary },
+          )
+        }
+
+        if (plannedTrials > policy.maxTrials) {
+          return failed(
+            'mcp/trial-limit',
+            `The plan contains ${plannedTrials} trials; the operator limit is ${policy.maxTrials}.`,
+            `Review a dry run, then have the operator restart whichtool with --max-trials ${plannedTrials} if acceptable. The hard maximum is ${MCP_MAX_TRIALS}.`,
+            { plan: planSummary },
           )
         }
 
@@ -683,10 +741,13 @@ async function callTool(
           const provider = cachingProvider ?? rawProvider
 
           runtime.writeErr(
-            `whichtool: running ${plan.trials.length} trials against ${provider.model}\n`,
+            `whichtool: running ${plan.trials.length} trials against ${provider.model}; ` +
+              `cold-cache prompt floor ~${estimate.totalPromptTokens} tokens. Output and reasoning are additional.\n`,
           )
           const executed = await runTrials(plan, taskSet.tasks, surface.tools, provider, {
             concurrency,
+            maxTools: policy.maxTools,
+            maxTrials: policy.maxTrials,
             temperature: policy.config.trials?.temperature ?? 0,
             signal,
           })
@@ -825,10 +886,17 @@ export async function runMcpServer(runtime: Runtime, argv: readonly string[]): P
       'Executable JavaScript and TypeScript config files are supported by the human CLI, but an agent-facing server must start from an explicit, data-only JSON config.',
     )
   }
+  // Never auto-discover executable config from an untrusted working directory. The MCP
+  // process receives authority only from an explicit, data-only startup file.
+  const config = configPath === undefined ? {} : await loadConfig(runtime, configPath)
   const policy: McpPolicy = {
-    // Never auto-discover executable config from an untrusted working directory. The MCP
-    // process receives authority only from an explicit, data-only startup file.
-    config: configPath === undefined ? {} : await loadConfig(runtime, configPath),
+    config,
+    maxTools: assertMaxTools(
+      (flags['max-tools'] as number | undefined) ?? config.trials?.maxTools ?? DEFAULT_MAX_TOOLS,
+    ),
+    maxTrials: assertMaxTrials(
+      (flags['max-trials'] as number | undefined) ?? config.trials?.maxTrials ?? DEFAULT_MAX_TRIALS,
+    ),
     cacheEnabled: flags['cache'] === true,
     allowDynamicTargets: flags['allow-dynamic-targets'] === true,
     allowPaidRuns: flags['allow-paid-runs'] === true,
@@ -967,7 +1035,7 @@ export async function runMcpServer(runtime: Runtime, argv: readonly string[]): P
   }
 
   runtime.writeErr(
-    `whichtool ${WHICHTOOL_VERSION} MCP server on stdio. ${MCP_SERVER_TOOLS.length} tools. Dynamic targets: ${policy.allowDynamicTargets ? 'enabled' : 'disabled'}; real provider calls: ${policy.allowPaidRuns ? 'enabled' : 'disabled'}.\n`,
+    `whichtool ${WHICHTOOL_VERSION} MCP server on stdio. ${MCP_SERVER_TOOLS.length} tools. Dynamic targets: ${policy.allowDynamicTargets ? 'enabled' : 'disabled'}; real provider calls: ${policy.allowPaidRuns ? 'enabled' : 'disabled'}; real-run limits: ${policy.maxTrials} trials, ${policy.maxTools} tools.\n`,
   )
 
   // Keep consuming notifications while long provider calls are in flight, so cancellation

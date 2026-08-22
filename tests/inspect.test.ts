@@ -2,8 +2,8 @@ import { describe, expect, test } from 'bun:test'
 import { readFile } from 'node:fs/promises'
 import { buildInspectReport, INSPECT_SCHEMA_VERSION, topFindings } from '../src/core/inspect.js'
 import { loadSurface } from '../src/core/surface/fetch.js'
-import { createSnapshotTransport } from '../src/core/transport/index.js'
-import { fixturePath } from './helpers.js'
+import { createSnapshotTransport, snapshotTransportFromData } from '../src/core/transport/index.js'
+import { fixturePath, readFixture } from './helpers.js'
 import type { InspectOptions, InspectReport } from '../src/core/inspect.js'
 
 const deps = { readTextFile: (path: string) => readFile(path, 'utf8') }
@@ -50,6 +50,29 @@ describe('buildInspectReport', () => {
   test('a token budget that is met passes', async () => {
     const report = await inspectFixture('clean.json', { maxContextTokens: 100_000 })
     expect(report.ok).toBe(true)
+  })
+
+  test('warns above the cautious six-tool review threshold without claiming a universal limit', async () => {
+    const source = readFixture('clean.json') as { tools: unknown[] }
+    const tools = [
+      ...source.tools,
+      ...Array.from({ length: 3 }, (_, index) => ({
+        name: `extra_${index + 1}`,
+        description: `Handle distinct extra workflow ${index + 1}.`,
+        inputSchema: { type: 'object', properties: {} },
+      })),
+    ]
+    const surface = await loadSurface(snapshotTransportFromData({ tools }, 'seven-tools.json'))
+    const report = buildInspectReport(surface)
+    const warning = report.diagnostics.find(
+      (diagnostic) => diagnostic.code === 'surface/large-tool-set',
+    )
+
+    expect(warning).toMatchObject({
+      severity: 'warning',
+      detail: { actual: 7, reviewThreshold: 6 },
+    })
+    expect(warning?.message).toContain('not a universal model limit')
   })
 
   test('names the spec revision its deprecation check was reconciled against', async () => {

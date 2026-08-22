@@ -9,7 +9,7 @@ export type {
   WhichtoolConfig,
 } from './config.js'
 
-export { NotImplementedError, WhichtoolError } from './core/errors.js'
+export { CancellationError, NotImplementedError, WhichtoolError } from './core/errors.js'
 export { WHICHTOOL_VERSION } from './version.js'
 
 export type {
@@ -110,6 +110,10 @@ export type { PlanOptions, Trial, TrialPlan } from './core/eval/planner.js'
 export { runTrials } from './core/eval/runner.js'
 export type { RunnerOptions, RunnerResult, TrialOutcome } from './core/eval/runner.js'
 export {
+  ABSOLUTE_MAX_TOOLS,
+  ABSOLUTE_MAX_TRIALS,
+  DEFAULT_MAX_TOOLS,
+  DEFAULT_MAX_TRIALS,
   MAX_CONCURRENCY,
   MAX_PLANNED_TRIALS,
   MAX_REPEAT,

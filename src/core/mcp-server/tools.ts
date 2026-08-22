@@ -1,4 +1,5 @@
 import type { JsonObject, RawTool } from '../types.js'
+import { ABSOLUTE_MAX_TOOLS, ABSOLUTE_MAX_TRIALS } from '../eval/options.js'
 
 const TARGET_PROPERTY: JsonObject = {
   type: 'string',
@@ -14,7 +15,8 @@ const TRANSPORT_PROPERTY: JsonObject = {
 }
 
 export const MCP_MAX_REPEAT = 20
-export const MCP_MAX_TRIALS = 1_000
+export const MCP_MAX_TRIALS = ABSOLUTE_MAX_TRIALS
+export const MCP_MAX_TOOLS = ABSOLUTE_MAX_TOOLS
 export const MCP_MAX_CONCURRENCY = 16
 
 /** Shared machine-readable result envelope returned by every whichtool MCP tool. */
@@ -83,7 +85,7 @@ export const MCP_SERVER_TOOLS: readonly RawTool[] = [
     name: 'run_evaluation',
     title: 'Measure which tool a model picks',
     description:
-      'Show a language model what an MCP server offers, ask it a prepared set of questions repeatedly with the ordering shuffled, and record what it reaches for each time. Yields a confusion matrix, per-entry hit rates with confidence intervals, and which pairs get mistaken for each other. Spends money or GPU time and takes minutes. Never invokes anything on the server under measurement.',
+      'Show a language model what an MCP server offers, ask it a prepared set of questions repeatedly with the ordering shuffled, and record what it reaches for each time. Yields a confusion matrix, per-entry hit rates with confidence intervals, and which pairs get mistaken for each other. Spends money or GPU time and takes minutes. Operator-owned real-run limits default to 50 trials and 6 tools; dryRun reports them. Never invokes anything on the server under measurement.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -119,7 +121,7 @@ export const MCP_SERVER_TOOLS: readonly RawTool[] = [
         dryRun: {
           type: 'boolean',
           description:
-            'Count the trials and estimate the token cost without sending anything to the model.',
+            'Count trials and show a prompt-token lower bound without sending anything to the model. Output and reasoning tokens are not included.',
         },
         minAccuracy: {
           type: 'number',

@@ -3,6 +3,7 @@ import { createAnthropicProvider } from '../src/core/providers/anthropic.js'
 import { createOpenAiCompatibleProvider } from '../src/core/providers/openai-compatible.js'
 import { createOpenAiResponsesProvider } from '../src/core/providers/openai-responses.js'
 import { createMockProvider } from '../src/core/providers/mock.js'
+import { DEFAULT_RETRIES } from '../src/core/providers/http.js'
 import { ProviderError } from '../src/core/providers/types.js'
 import type { JsonObject, NormalizedTool } from '../src/core/types.js'
 import { caught } from './helpers.js'
@@ -55,6 +56,23 @@ const TOOL_USE_TURN: JsonObject = {
   ],
   usage: { input_tokens: 412, output_tokens: 37 },
 }
+
+test('built-in HTTP providers do not retry paid requests unless explicitly configured', () => {
+  expect(DEFAULT_RETRIES).toBe(0)
+})
+
+test('a transient HTTP failure makes one request by default', async () => {
+  const { seen, fetchImpl } = stub({ error: { message: 'busy' } }, 503)
+  const instance = createAnthropicProvider({
+    model: 'claude-opus-5',
+    apiKey: 'sk-ant-test',
+    fetch: fetchImpl,
+  })
+
+  await caught(instance.pick({ tools: TOOLS, prompt: 'show me the users', temperature: 0 }))
+
+  expect(seen).toHaveLength(1)
+})
 
 describe('the Anthropic provider speaks the Messages API, not a chat-completions dialect', () => {
   test('posts to /v1/messages with the version and key headers', async () => {

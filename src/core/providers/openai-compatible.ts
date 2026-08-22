@@ -6,7 +6,7 @@ import {
   createProviderCacheFingerprint,
   reportableProviderHeaders,
 } from './cache-fingerprint.js'
-import { createJsonPoster, stripCredentials } from './http.js'
+import { createJsonPoster, DEFAULT_RETRIES, stripCredentials } from './http.js'
 import {
   ProviderError,
   recordToolCall,
@@ -186,6 +186,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
   if (options.apiKey !== undefined && options.apiKey !== '') {
     headers['authorization'] = `Bearer ${options.apiKey}`
   }
+  const retries = options.retries ?? DEFAULT_RETRIES
   const cacheFingerprint = createProviderCacheFingerprint({
     api: 'openai-chat-completions/v1',
     id: options.id ?? 'openai-compatible',
@@ -194,7 +195,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
     headers,
     reasoningEffort: options.reasoningEffort ?? null,
     timeoutMs: options.timeoutMs ?? null,
-    retries: options.retries ?? null,
+    retries,
     capabilities,
   })
   const behaviorFingerprint = createProviderBehaviorFingerprint({
@@ -205,7 +206,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
     headers: reportableProviderHeaders(headers),
     reasoningEffort: options.reasoningEffort ?? null,
     timeoutMs: options.timeoutMs ?? null,
-    retries: options.retries ?? null,
+    retries,
     capabilities,
   })
 
@@ -214,7 +215,7 @@ export function createOpenAiCompatibleProvider(options: OpenAiCompatibleOptions)
     headers,
     ...(options.fetch !== undefined ? { fetch: options.fetch } : {}),
     ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
-    ...(options.retries !== undefined ? { retries: options.retries } : {}),
+    retries,
   })
   return {
     id: options.id ?? 'openai-compatible',

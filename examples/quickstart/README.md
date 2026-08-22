@@ -3,6 +3,11 @@
 Everything here runs against files in this directory. Nothing reaches a network until the
 last step, and that step is optional.
 
+> [!WARNING]
+> npm publication is temporarily paused. The `npx` commands below are retained for a
+> possible future republication. During the pause, use a source checkout and replace
+> `npx whichtool` with `bun ../../src/cli/main.ts` from this directory.
+
 ```bash
 cd examples/quickstart
 ```
@@ -34,7 +39,7 @@ Ten tasks, three of them distractors, every tool covered. Try breaking it — ch
 `expected:` to a tool that does not exist, or delete the distractors — and watch what it
 says.
 
-## 3. Find out what a run would cost
+## 3. Preview the workload
 
 ```bash
 npx whichtool run --dry-run
@@ -42,7 +47,18 @@ npx whichtool run --dry-run --seconds-per-trial 50
 ```
 
 No model is called. The second form estimates wall clock from a figure _you_ measured;
-whichtool will not invent one.
+whichtool will not invent one. The prompt-token total is a lower bound, not a price
+estimate: output and reasoning tokens are additional.
+
+This example selects ten tasks and configures `repeat: 3`, so it plans 30 trials. Without a
+config override, `repeat` defaults to 5 per selected task. A real run refuses more than 50
+total trials by default; after reviewing the dry-run, raise the budget with `--max-trials N`
+or `trials.maxTrials` if needed. The absolute maximum is 1,000 and cannot be overridden.
+
+This surface contains 4 tools. `inspect` warns above 6, and a real run blocks above 6 by
+default before calling the provider. Use `--max-tools N` or `trials.maxTools` only after
+reviewing the surface, up to the hard maximum of 1,000. Six is a cautious default rather than
+a universal rule; `--max-context-tokens` remains important because schemas vary in size.
 
 ## 4. Run it
 
@@ -58,6 +74,10 @@ Or with a hosted one:
 ```bash
 OPENAI_API_KEY=sk-… npx whichtool run --provider openai --model gpt-4.1-mini
 ```
+
+The built-in HTTP providers do not retry failed requests automatically by default.
+Press `Ctrl+C` to abort in-flight requests; the command exits with code 130 and does not
+write a partial report.
 
 Save the run so you can do things with it afterwards:
 

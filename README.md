@@ -8,6 +8,19 @@
 
 [Italiano](README.it.md)
 
+> [!WARNING]
+> **Publication is temporarily paused.** Automated releases are disabled, and the npm
+> package may be unavailable while the public GitHub repository remains online. The
+> registry and Action instructions below are intentionally retained for a possible future
+> republication. To use the current source now:
+>
+> ```bash
+> git clone https://github.com/mattagame/whichtool.git
+> cd whichtool
+> bun install
+> bun run ./src/cli/main.ts inspect ./tools.json
+> ```
+
 An MCP server can have valid schemas and still be unreadable to a model. Ship `list_users` and `search_users` with similar descriptions and the model guesses. Schema validation still passes. Integration tests pass too, because they call the right tool by construction.
 
 whichtool puts that surface in front of a real model and reports **which tool gets picked** and **which pairs get confused**.
@@ -26,6 +39,14 @@ It does two jobs:
 
 - **`inspect`** — token budget, contradictory annotations, near-identical descriptions, invalid `x-mcp-header` values. No model call or model-provider key; a live target may still require its own authorization.
 - **`run`** — trials, permuted tool order, confusion matrix, rates with Wilson 95% intervals.
+
+`inspect` warns when a surface exposes more than 6 tools. Real CLI, MCP, and GitHub Action
+runs stop before calling a model above that default. After reviewing the surface, an
+operator can raise the limit with `--max-tools N`, `trials.maxTools`, the MCP startup flag,
+or the Action's `max-tools` input; 1,000 is the hard maximum. Six is a cautious default, not
+a universal rule: more tools can increase ambiguity and prompt size, but the right number
+depends on the model, schemas, descriptions, and tasks. Also set `--max-context-tokens` so a
+small number of unusually large tools cannot bypass the context budget.
 
 Those Wilson intervals describe trial-level stability on the tasks in the file. Repeating a
 task measures whether that same routing decision is stable; it does not estimate how the
@@ -46,7 +67,8 @@ Requires Node 20.11+ or Bun 1.3+. Zero runtime dependencies.
 
 Standalone binaries are not published yet. Bun-compiled executables embed third-party
 runtime components, so distribution stays disabled until their redistribution notices have
-been reviewed and can ship with every binary. Use `npx` or the container in the meantime.
+been reviewed and can ship with every binary. This is separate from the temporary package
+publication pause above; use the source checkout while that pause is in effect.
 
 ## Quick start
 
@@ -91,13 +113,26 @@ whichtool tasks mutate --out whichtool.tasks.mutated.yaml --seed 0
 # 3. Lint before spending anything
 whichtool tasks lint ./tools.json --tasks ./whichtool.tasks.yaml
 
-# 4. Cost estimate (no model call)
+# 4. Preview the workload (no model call)
 whichtool run ./tools.json --provider ollama --model qwen3:4b --repeat 5 --dry-run
 
 # 5. Measure
 whichtool run ./tools.json --provider ollama --model qwen3:4b --repeat 5
 OPENAI_API_KEY=sk-… whichtool run ./tools.json --provider openai --model gpt-4.1-mini
 ```
+
+`--repeat` defaults to 5 **per selected task**, so total trials are the tasks left after
+`--only` / `--skip`, multiplied by `repeat`. A real run refuses more than 50 total trials by
+default. After reviewing `--dry-run`, raise that budget with `--max-trials N` or
+`trials.maxTrials`; 1,000 is an absolute, non-overridable maximum.
+
+The dry-run prompt-token figure is a lower bound, not a price estimate. Output and reasoning
+tokens are additional and can be much larger. Automatic retries are disabled by default for
+the built-in HTTP providers.
+
+During `whichtool run`, press `Ctrl+C` to abort in-flight provider requests. The command
+exits with code `130` and does not write a partial report. MCP evaluations remain cancellable
+through the MCP protocol.
 
 Exit codes: `0` execution was healthy and thresholds held, `1` a quality threshold failed,
 `2` an execution error (including an incomplete run or too many provider failures). By
@@ -135,7 +170,7 @@ in unexpected multi-call behaviour is a regression even when the first picks did
 `whichtool <command> --help` lists flags. Main flags on `run`:
 
 ```
---tasks --provider --model --repeat --concurrency --temperature --seed
+--tasks --provider --model --repeat --max-trials --max-tools --concurrency --temperature --seed
 --min-scored --max-error-rate
 --permute / --no-permute --format --out --min-accuracy --max-over-trigger
 --max-context-tokens --only --skip --dry-run --seconds-per-trial --reasoning-effort
@@ -171,7 +206,14 @@ export default defineConfig({
   target: { transport: 'stdio', command: 'bun run ./src/server.ts' },
   tasks: './whichtool.tasks.yaml',
   provider: { name: 'ollama', model: 'qwen3:4b' },
-  trials: { repeat: 5, permute: true, temperature: 0, concurrency: 4 },
+  trials: {
+    repeat: 5,
+    maxTrials: 50,
+    maxTools: 6,
+    permute: true,
+    temperature: 0,
+    concurrency: 4,
+  },
   thresholds: {
     minAccuracy: 0.9,
     maxOverTrigger: 0.05,
@@ -196,6 +238,8 @@ explained below.
     tasks: ./whichtool.tasks.yaml
     provider: openai
     model: gpt-4.1-mini
+    max-trials: '50'
+    max-tools: '6'
     min-accuracy: '0.9'
     max-over-trigger: '0.05'
 ```
@@ -203,6 +247,12 @@ explained below.
 Trial caching in the composite action is disabled by default because a cache can contain prompts, tool definitions,
 and provider responses. Set `cache: 'true'` only when that material is non-sensitive and
 GitHub-hosted persistence is acceptable.
+
+The Action blocks a measured invocation above 6 tools by default; `max-tools` can raise the
+limit only up to 1,000. Its `max-trials` budget applies to each measured invocation. A
+comparison workflow that measures both the head and base revisions can therefore use the
+trial budget once for each run; with the default, that is at most 50 trials for head and 50
+for base.
 
 Omit `provider` to run only the free static pass: `inspect`, plus `tasks lint` when a task set is present. A full workflow (including a base-branch comparison written to the job summary) is in [examples/github-action](examples/github-action).
 
@@ -231,8 +281,12 @@ reviewed: `inspect_surface`, `validate_task_file`, `run_evaluation`, then
 It exposes the same single-turn routing benchmark; it is not an evaluator or executor for a
 complete agent workflow.
 `run_evaluation` can always produce a dry-run plan, but cannot contact a provider unless the
-operator starts the server with `--allow-paid-runs`; `repeat`, total trials, and concurrency
-also have hard caps. A full run returns a compact summary. Add
+operator starts the server with `--allow-paid-runs`. The operator-owned real-run budget is
+50 total trials by default; only the startup `--max-trials` flag or `trials.maxTrials` in the
+reviewed config can raise it, up to the absolute maximum of 1,000. The agent cannot override
+that budget. The same operator-owned rule applies to the 6-tool default through startup
+`--max-tools` or `trials.maxTools`, with an absolute maximum of 1,000. `repeat` and
+concurrency also have caps. A full run returns a compact summary. Add
 `--result-file ./latest-run.json` to keep the complete report outside model context.
 `--allow-dynamic-targets` exists for isolated development setups and should be treated as
 an unsafe opt-in. Provider/model overrides are likewise config-only unless the operator
@@ -249,7 +303,10 @@ to disk.
 | [ollama-qwen3](examples/ollama-qwen3)         | A local-model run that disagrees with the static lint. |
 | [github-action](examples/github-action)       | CI wiring with a base-branch diff.                     |
 
-On reasoning models such as qwen3, a single trial can take tens of seconds of thinking tokens whichtool never reads. Measure one trial, then pass `--dry-run --seconds-per-trial`.
+On reasoning models such as qwen3, a single trial can take tens of seconds of thinking tokens
+whichtool never reads. Measure one trial, then pass `--dry-run --seconds-per-trial`. Its
+prompt-token total remains a lower bound, not a price estimate; output and reasoning tokens
+are additional.
 
 ## Development
 
@@ -275,7 +332,7 @@ Design record: [SPEC.md](SPEC.md). Security: [SECURITY.md](SECURITY.md). JSON co
 
 Software is provided as-is, without warranty. See [LICENSE.md](LICENSE.md).
 
-- **`run` costs money** on hosted providers. Tool definitions and prompts are sent to the model you configure. Use `--dry-run` first. Ollama and other local endpoints stay on your machine.
+- **`run` costs money** on hosted providers. Tool definitions and prompts are sent to the model you configure. Use `--dry-run` first, but treat its prompt-token figure as a lower bound rather than a price estimate. Ollama and other local endpoints stay on your machine.
 - **Tools on the server under test are never invoked.** `stdio` does launch the command you pass, with your privileges — treat that command as code.
 - **Standalone binaries are not distributed yet.** Publication stays disabled until the embedded runtime's third-party notices have been reviewed and can ship beside each binary.
 - **Not a security scanner.** A surface can pass `inspect` and still be dangerous. Details: [SECURITY.md](SECURITY.md).

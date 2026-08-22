@@ -1,4 +1,5 @@
 import { WhichtoolError } from '../../core/errors.js'
+import { ABSOLUTE_MAX_TOOLS, assertMaxTools, DEFAULT_MAX_TOOLS } from '../../core/eval/options.js'
 import { createStyler, renderDiagnostic, sortDiagnostics } from '../../core/report/format.js'
 import { loadSurface } from '../../core/surface/fetch.js'
 import {
@@ -70,6 +71,11 @@ export const TASKS_GENERATE_FLAGS: FlagSpecs = {
     description: `Requests to write per tool (default ${DEFAULT_TASKS_PER_TOOL})`,
     placeholder: 'n',
   },
+  'max-tools': {
+    type: 'number',
+    description: `Maximum tools shown to the generator (default ${DEFAULT_MAX_TOOLS}; hard max ${ABSOLUTE_MAX_TOOLS})`,
+    placeholder: 'n',
+  },
   distractors: {
     type: 'number',
     description: `Distractors to write (default ${DEFAULT_DISTRACTORS})`,
@@ -114,6 +120,16 @@ export async function runTasksGenerate(runtime: Runtime, argv: readonly string[]
 
   try {
     const surface = await loadSurface(transport)
+    const maxTools = assertMaxTools(
+      (flags['max-tools'] as number | undefined) ?? config.trials?.maxTools ?? DEFAULT_MAX_TOOLS,
+    )
+    if (surface.tools.length > maxTools) {
+      throw new WhichtoolError(
+        'generate/tool-limit',
+        `Surface exposes ${surface.tools.length} tools, above the configured generator limit of ${maxTools}.`,
+        `Inspect the surface first, then pass --max-tools ${surface.tools.length} if generating across the whole surface is intentional.`,
+      )
+    }
     const provider = createProviderFromConfig(runtime, {
       config: config.provider,
       name: flags['provider'] as string | undefined,

@@ -1,5 +1,7 @@
 import { WhichtoolError } from '../core/errors.js'
 import {
+  ABSOLUTE_MAX_TOOLS,
+  ABSOLUTE_MAX_TRIALS,
   MAX_CONCURRENCY,
   MAX_REPEAT,
   MAX_TEMPERATURE,
@@ -143,12 +145,27 @@ export function validateConfig(value: unknown, source = 'config'): WhichtoolConf
     const trials = object(config.trials, source, 'trials')
     knownKeys(
       trials,
-      ['repeat', 'permute', 'temperature', 'concurrency', 'seed', 'reasoningEffort'],
+      [
+        'repeat',
+        'maxTrials',
+        'maxTools',
+        'permute',
+        'temperature',
+        'concurrency',
+        'seed',
+        'reasoningEffort',
+      ],
       source,
       'trials',
     )
     if (trials.repeat !== undefined) {
       safeIntegerRange(trials.repeat, MIN_REPEAT, MAX_REPEAT, source, 'trials.repeat')
+    }
+    if (trials.maxTrials !== undefined) {
+      safeIntegerRange(trials.maxTrials, 1, ABSOLUTE_MAX_TRIALS, source, 'trials.maxTrials')
+    }
+    if (trials.maxTools !== undefined) {
+      safeIntegerRange(trials.maxTools, 1, ABSOLUTE_MAX_TOOLS, source, 'trials.maxTools')
     }
     if (trials.permute !== undefined && typeof trials.permute !== 'boolean') {
       invalid(source, 'trials.permute', 'must be a boolean.')

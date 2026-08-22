@@ -5,10 +5,10 @@ export function isBun(): boolean {
   return (globalThis as { Bun?: unknown }).Bun !== undefined
 }
 
-export async function detectRuntime(): Promise<Runtime> {
+export async function detectRuntime(signal?: AbortSignal | undefined): Promise<Runtime> {
   if (isBun()) {
     const { createBunRuntime } = await import('./bun.js')
-    return createBunRuntime()
+    return createBunRuntime(signal)
   }
-  return createNodeRuntime('node')
+  return createNodeRuntime('node', signal)
 }

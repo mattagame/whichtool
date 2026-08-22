@@ -15,7 +15,29 @@ because downstream tools read them as contracts:
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- A cost-safety budget for real evaluations. `--repeat` remains 5 per selected task, while
+  real runs now default to at most 50 total trials. `--max-trials` or
+  `trials.maxTrials` can raise that budget, but the absolute maximum of 1,000 cannot be
+  overridden. The MCP server keeps this budget under operator control, and the GitHub
+  Action applies its `max-trials` input to each measured invocation.
+- A surface-size guard. `inspect` warns above 6 tools, while real CLI, MCP, and GitHub
+  Action evaluations stop at 6 by default before contacting a model. Operators can raise
+  the budget with `--max-tools`, `trials.maxTools`, the MCP startup flag, or the Action's
+  `max-tools` input, up to the absolute maximum of 1,000.
+
+### Changed
+
+- Dry-run prompt-token totals are now described as lower bounds rather than price
+  estimates; output and reasoning tokens remain additional.
+- Automatic retries now default to disabled for the built-in HTTP providers, keeping one
+  failed trial from silently multiplying provider requests.
+- `Ctrl+C` now aborts in-flight provider requests, exits with code 130, and does not write a
+  partial report. MCP evaluations remain cancellable through the protocol.
+- Automated release publication is temporarily paused, and the npm package may be
+  unavailable. Registry and Action instructions remain documented for a possible future
+  republication; the public source checkout remains usable directly.
 
 ## [0.1.0] - 2026-08-21
 

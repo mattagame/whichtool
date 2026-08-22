@@ -10,6 +10,14 @@ export class WhichtoolError extends Error {
   }
 }
 
+/** A user-requested stop, kept distinct from a failed evaluation. */
+export class CancellationError extends WhichtoolError {
+  constructor(message = 'Operation cancelled.') {
+    super('operation/cancelled', message)
+    this.name = 'CancellationError'
+  }
+}
+
 export class NotImplementedError extends WhichtoolError {
   constructor(message: string, hint?: string) {
     super('not-implemented', message, hint)

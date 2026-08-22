@@ -6,7 +6,7 @@ import {
   createProviderCacheFingerprint,
   reportableProviderHeaders,
 } from './cache-fingerprint.js'
-import { createJsonPoster, stripCredentials } from './http.js'
+import { createJsonPoster, DEFAULT_RETRIES, stripCredentials } from './http.js'
 import {
   ProviderError,
   recordToolCall,
@@ -156,6 +156,7 @@ export function createOpenAiResponsesProvider(options: OpenAiResponsesOptions): 
   if (options.apiKey !== undefined && options.apiKey !== '') {
     headers['authorization'] = `Bearer ${options.apiKey}`
   }
+  const retries = options.retries ?? DEFAULT_RETRIES
   const cacheFingerprint = createProviderCacheFingerprint({
     api: 'openai-responses/v1',
     id: options.id ?? 'openai',
@@ -164,7 +165,7 @@ export function createOpenAiResponsesProvider(options: OpenAiResponsesOptions): 
     headers,
     reasoningEffort: options.reasoningEffort ?? null,
     timeoutMs: options.timeoutMs ?? null,
-    retries: options.retries ?? null,
+    retries,
     capabilities,
   })
   const behaviorFingerprint = createProviderBehaviorFingerprint({
@@ -175,7 +176,7 @@ export function createOpenAiResponsesProvider(options: OpenAiResponsesOptions): 
     headers: reportableProviderHeaders(headers),
     reasoningEffort: options.reasoningEffort ?? null,
     timeoutMs: options.timeoutMs ?? null,
-    retries: options.retries ?? null,
+    retries,
     capabilities,
   })
 
@@ -184,7 +185,7 @@ export function createOpenAiResponsesProvider(options: OpenAiResponsesOptions): 
     headers,
     ...(options.fetch !== undefined ? { fetch: options.fetch } : {}),
     ...(options.timeoutMs !== undefined ? { timeoutMs: options.timeoutMs } : {}),
-    ...(options.retries !== undefined ? { retries: options.retries } : {}),
+    retries,
   })
 
   const commonBody = (): JsonObject => ({

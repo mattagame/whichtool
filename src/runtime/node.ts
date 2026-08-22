@@ -167,9 +167,13 @@ export async function spawnMcpProcess(spec: SpawnSpec): Promise<McpProcess> {
  * the `node:` builtins — only the handful of calls where `Bun.*` is genuinely better are
  * overridden there.
  */
-export function createNodeRuntime(name: 'bun' | 'node' = 'node'): Runtime {
+export function createNodeRuntime(
+  name: 'bun' | 'node' = 'node',
+  signal?: AbortSignal | undefined,
+): Runtime {
   return {
     name,
+    ...(signal === undefined ? {} : { signal }),
     async readTextFile(path) {
       return readFile(path, 'utf8')
     },

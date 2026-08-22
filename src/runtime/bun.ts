@@ -6,8 +6,8 @@ declare const Bun: {
   write(path: string, data: string): Promise<number>
 }
 
-export function createBunRuntime(): Runtime {
-  const base = createNodeRuntime('bun')
+export function createBunRuntime(signal?: AbortSignal | undefined): Runtime {
+  const base = createNodeRuntime('bun', signal)
   return {
     ...base,
     async readTextFile(path) {

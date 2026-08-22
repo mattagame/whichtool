@@ -1,5 +1,10 @@
 # CI wiring
 
+> [!WARNING]
+> Automated publication is temporarily paused and the npm package may be unavailable. This
+> workflow is retained as the intended setup for a possible future republication; while the
+> package is absent, its measured steps cannot install the CLI from npm.
+
 `whichtool.yml` is a complete GitHub Actions workflow. Copy it to
 `.github/workflows/whichtool.yml` and adjust the paths.
 
@@ -10,7 +15,9 @@ task set, inspect the surface, fail if the tool definitions grew past the token 
 write the surface report into the job summary.
 
 **On a pull request from the same repository**, a measured run, plus the same run against
-the base branch, plus a delta written into the job summary.
+the base branch, plus a delta written into the job summary. Each real invocation blocks
+above 6 tools by default before contacting the provider; the Action's explicit `max-tools`
+input can raise the limit only up to 1,000.
 
 ## Three things it does on purpose
 

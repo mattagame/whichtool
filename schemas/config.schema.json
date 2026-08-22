@@ -20,6 +20,8 @@
       "type": "object",
       "properties": {
         "repeat": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "maxTrials": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "maxTools": { "type": "integer", "minimum": 1, "maximum": 1000 },
         "permute": { "type": "boolean" },
         "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
         "concurrency": { "type": "integer", "minimum": 1, "maximum": 64 },

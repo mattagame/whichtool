@@ -8,7 +8,14 @@ import { WhichtoolError } from '../errors.js'
 import { isJsonObject } from '../json.js'
 import type { Task } from '../tasks/schema.js'
 import type { JsonObject, JsonValue, NormalizedTool } from '../types.js'
-import { assertConcurrency, assertTemperature } from './options.js'
+import {
+  ABSOLUTE_MAX_TOOLS,
+  ABSOLUTE_MAX_TRIALS,
+  assertConcurrency,
+  assertMaxTools,
+  assertMaxTrials,
+  assertTemperature,
+} from './options.js'
 import { orderTools, type Trial, type TrialPlan } from './planner.js'
 
 export interface TrialOutcome {
@@ -36,6 +43,10 @@ export interface TrialOutcome {
 
 export interface RunnerOptions {
   concurrency?: number
+  /** Defensive execution ceiling. Defaults to the absolute library maximum. */
+  maxTrials?: number
+  /** Defensive tool-surface ceiling. Defaults to the absolute library maximum. */
+  maxTools?: number
   temperature?: number
   signal?: AbortSignal | undefined
   onTrial?: (outcome: TrialOutcome, completed: number, total: number) => void
@@ -53,6 +64,12 @@ export interface RunnerResult {
 }
 
 const INVALID_JSON = Symbol('invalid-json')
+
+// AbortSignal.aborted is typed readonly even though it changes asynchronously. Reading it
+// through a function prevents TypeScript from treating the pre-await value as permanent.
+function isAbortRequested(signal: AbortSignal | undefined): boolean {
+  return signal?.aborted === true
+}
 
 function cloneJsonValueStrict(
   value: unknown,
@@ -235,6 +252,20 @@ export async function runTrials(
 
   const byId = new Map(tasks.map((task) => [task.id, task]))
   const outcomes = new Array<TrialOutcome>(plan.trials.length)
+  const maxTrials = assertMaxTrials(options.maxTrials ?? ABSOLUTE_MAX_TRIALS)
+  if (plan.trials.length > maxTrials) {
+    throw new WhichtoolError(
+      'trials/limit-exceeded',
+      `Run contains ${plan.trials.length} trials; the execution limit is ${maxTrials}.`,
+    )
+  }
+  const maxTools = assertMaxTools(options.maxTools ?? ABSOLUTE_MAX_TOOLS)
+  if (tools.length > maxTools || plan.toolCount > maxTools) {
+    throw new WhichtoolError(
+      'trials/tool-limit-exceeded',
+      `Run contains ${Math.max(tools.length, plan.toolCount)} tools; the execution limit is ${maxTools}.`,
+    )
+  }
   const concurrency = assertConcurrency(options.concurrency ?? DEFAULT_CONCURRENCY)
   assertTemperature(options.temperature ?? DEFAULT_TEMPERATURE)
   const started = Date.now()
@@ -244,7 +275,7 @@ export async function runTrials(
 
   const worker = async (): Promise<void> => {
     for (;;) {
-      if (options.signal?.aborted === true) return
+      if (isAbortRequested(options.signal)) return
 
       const index = cursor
       cursor += 1
@@ -275,7 +306,11 @@ export async function runTrials(
       }
 
       completed += 1
-      options.onTrial?.(outcomes[index] as TrialOutcome, completed, plan.trials.length)
+      // In-flight requests all settle after an abort. Do not print a burst of misleading
+      // "error" progress lines while the CLI is already reporting that it was cancelled.
+      if (!isAbortRequested(options.signal)) {
+        options.onTrial?.(outcomes[index] as TrialOutcome, completed, plan.trials.length)
+      }
     }
   }
 
@@ -285,6 +320,6 @@ export async function runTrials(
   return {
     outcomes: settled,
     durationMs: Date.now() - started,
-    cancelled: options.signal?.aborted === true,
+    cancelled: isAbortRequested(options.signal),
   }
 }

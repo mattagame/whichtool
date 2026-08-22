@@ -27,6 +27,14 @@ inputs:
     description: Trials per task.
     required: false
     default: '5'
+  max-trials:
+    description: Maximum total trials in one measured invocation. Hard maximum 1000.
+    required: false
+    default: '50'
+  max-tools:
+    description: Maximum tools shown to the model in one measured invocation. Hard maximum 1000.
+    required: false
+    default: '6'
   cache:
     description: >-
       Persist prompts, tool definitions, and provider responses in GitHub's cache. Opt in
@@ -76,11 +84,29 @@ runs:
         WT_TARGET: ${{ inputs.target }}
         WT_TRANSPORT: ${{ inputs.transport }}
         WT_MAX_CONTEXT_TOKENS: ${{ inputs.max-context-tokens }}
+        WT_MAX_TOOLS: ${{ inputs.max-tools }}
+        WT_PROVIDER: ${{ inputs.provider }}
       run: |
-        args=(inspect "$WT_TARGET")
+        inspect_file="$(mktemp)"
+        trap 'rm -f "$inspect_file"' EXIT
+        args=(inspect "$WT_TARGET" --format json)
         [[ -n "$WT_TRANSPORT" ]] && args+=(--transport "$WT_TRANSPORT")
         [[ -n "$WT_MAX_CONTEXT_TOKENS" ]] && args+=(--max-context-tokens "$WT_MAX_CONTEXT_TOKENS")
-        npx --yes "whichtool@$WT_VERSION" "${args[@]}"
+        npx --yes "whichtool@$WT_VERSION" "${args[@]}" > "$inspect_file"
+        node -e '
+          const { readFileSync } = require("node:fs");
+          const report = JSON.parse(readFileSync(process.argv[1], "utf8"));
+          const toolCount = report.surface?.toolCount;
+          const maxTools = Number(process.env.WT_MAX_TOOLS);
+          if (!Number.isSafeInteger(toolCount) || toolCount < 0) throw new Error("tool count is unavailable");
+          if (!Number.isSafeInteger(maxTools) || maxTools < 1 || maxTools > 1000) throw new Error("max-tools must be an integer from 1 to 1000");
+          console.log(`whichtool: inspected ${toolCount} tools, ~${report.tokens?.total ?? "?"} prompt tokens`);
+          if (toolCount > maxTools) {
+            const message = `whichtool: ${toolCount} tools exceed the cautious limit of ${maxTools}; review the inspection and raise max-tools explicitly before using a model`;
+            console.error(message);
+            if (process.env.WT_PROVIDER) process.exitCode = 2;
+          }
+        ' "$inspect_file"
 
     - name: Validate the task set
       if: hashFiles(inputs.tasks) != ''
@@ -94,6 +120,38 @@ runs:
         args=(tasks lint "$WT_TARGET" --tasks "$WT_TASKS")
         [[ -n "$WT_TRANSPORT" ]] && args+=(--transport "$WT_TRANSPORT")
         npx --yes "whichtool@$WT_VERSION" "${args[@]}"
+
+    # This preflight deliberately uses the tasks-lint JSON available in whichtool 0.1.0,
+    # so the action enforces its budget even before the newer CLI flag is published.
+    - name: Check the trial budget
+      if: inputs.provider != ''
+      shell: bash
+      env:
+        WT_VERSION: ${{ inputs.whichtool-version }}
+        WT_TASKS: ${{ inputs.tasks }}
+        WT_REPEAT: ${{ inputs.repeat }}
+        WT_MAX_TRIALS: ${{ inputs.max-trials }}
+        WT_MAX_TOOLS: ${{ inputs.max-tools }}
+      run: |
+        budget_file="$(mktemp)"
+        trap 'rm -f "$budget_file"' EXIT
+        npx --yes "whichtool@$WT_VERSION" tasks lint --tasks "$WT_TASKS" --format json > "$budget_file"
+        node -e '
+          const { readFileSync } = require("node:fs");
+          const report = JSON.parse(readFileSync(process.argv[1], "utf8"));
+          const taskCount = report.coverage?.taskCount;
+          const repeat = Number(process.env.WT_REPEAT);
+          const maxTrials = Number(process.env.WT_MAX_TRIALS);
+          if (!Number.isSafeInteger(taskCount) || taskCount < 1) throw new Error("task count is unavailable");
+          if (!Number.isSafeInteger(repeat) || repeat < 1 || repeat > 1000) throw new Error("repeat must be an integer from 1 to 1000");
+          if (!Number.isSafeInteger(maxTrials) || maxTrials < 1 || maxTrials > 1000) throw new Error("max-trials must be an integer from 1 to 1000");
+          const trials = taskCount * repeat;
+          console.log(`whichtool: planned trial budget ${trials}/${maxTrials} (${taskCount} tasks x ${repeat})`);
+          if (trials > maxTrials) {
+            console.error(`whichtool: refusing ${trials} trials; raise max-trials explicitly after reviewing a dry run`);
+            process.exitCode = 2;
+          }
+        ' "$budget_file"
 
     # Trial material can be sensitive, so persistence is explicit and exact-key only.
     - name: Restore the trial cache
@@ -114,11 +172,19 @@ runs:
         WT_MODEL: ${{ inputs.model }}
         WT_TRANSPORT: ${{ inputs.transport }}
         WT_REPEAT: ${{ inputs.repeat }}
+        WT_MAX_TRIALS: ${{ inputs.max-trials }}
+        WT_MAX_TOOLS: ${{ inputs.max-tools }}
         WT_MIN_ACCURACY: ${{ inputs.min-accuracy }}
         WT_MAX_OVER_TRIGGER: ${{ inputs.max-over-trigger }}
         WT_CACHE: ${{ inputs.cache }}
       run: |
         args=(run "$WT_TARGET" --tasks "$WT_TASKS" --provider "$WT_PROVIDER" --repeat "$WT_REPEAT")
+        if [[ "$WT_MAX_TRIALS" != "50" ]] && npx --yes "whichtool@$WT_VERSION" run --help | grep -q -- '--max-trials'; then
+          args+=(--max-trials "$WT_MAX_TRIALS")
+        fi
+        if [[ "$WT_MAX_TOOLS" != "6" ]] && npx --yes "whichtool@$WT_VERSION" run --help | grep -q -- '--max-tools'; then
+          args+=(--max-tools "$WT_MAX_TOOLS")
+        fi
         if [[ "$WT_CACHE" == "true" ]]; then args+=(--cache); else args+=(--no-cache); fi
         [[ -n "$WT_MODEL" ]] && args+=(--model "$WT_MODEL")
         [[ -n "$WT_TRANSPORT" ]] && args+=(--transport "$WT_TRANSPORT")

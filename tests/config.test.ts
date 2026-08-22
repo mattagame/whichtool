@@ -11,6 +11,8 @@ describe('runtime config validation', () => {
         provider: { name: 'openai', model: 'gpt-5.6' },
         trials: {
           repeat: 5,
+          maxTrials: 50,
+          maxTools: 6,
           permute: true,
           temperature: 0,
           concurrency: 4,
@@ -25,6 +27,12 @@ describe('runtime config validation', () => {
 
   test('rejects wrong types, unknown keys, and out-of-range values', () => {
     expect(() => validateConfig({ trials: { repeat: 'many' } })).toThrow('trials.repeat')
+    for (const maxTrials of [0, 1.5, 1001]) {
+      expect(() => validateConfig({ trials: { maxTrials } })).toThrow('trials.maxTrials')
+    }
+    for (const maxTools of [0, 1.5, 1001]) {
+      expect(() => validateConfig({ trials: { maxTools } })).toThrow('trials.maxTools')
+    }
     expect(() => validateConfig({ trials: { concurrency: 0 } })).toThrow('trials.concurrency')
     expect(() => validateConfig({ trials: { temperature: 3 } })).toThrow('trials.temperature')
     expect(() => validateConfig({ trials: { reasoningEffort: '' } })).toThrow(

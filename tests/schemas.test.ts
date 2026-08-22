@@ -112,6 +112,15 @@ describe('published JSON Schemas', () => {
     }
   })
 
+  test('the config schema publishes the default-overridable hard trial ceiling', () => {
+    const config = json(join('schemas', 'config.schema.json'))
+    const properties = config['properties'] as Record<string, Record<string, unknown>>
+    const trials = properties['trials']?.['properties'] as Record<string, Record<string, unknown>>
+
+    expect(trials['maxTrials']).toEqual({ type: 'integer', minimum: 1, maximum: 1000 })
+    expect(trials['maxTools']).toEqual({ type: 'integer', minimum: 1, maximum: 1000 })
+  })
+
   test('the serialized proportion contract ties nullability to the denominator', () => {
     const common = json(join('schemas', 'common.schema.json'))
     const definitions = common['$defs'] as Record<string, Record<string, unknown>>

@@ -133,6 +133,14 @@ build always uses the provider-neutral `heuristic-bpe-v1`; the report declares
 estimate to compare surfaces and spot bloat, not as a provider bill. Provider-reported usage
 is authoritative when a run supplies it.
 
+Surface size has a separate cautious guardrail. `inspect` warns above 6 tools. Real CLI,
+MCP, and GitHub Action evaluations stop before a provider call above 6 by default;
+`--max-tools`, `trials.maxTools`, the operator-owned MCP startup flag, or the Action's
+`max-tools` input may raise the limit only up to 1,000. Six is not a universal cognitive
+limit: ambiguity depends on the model, names, descriptions, schemas, and tasks. The
+tool-count guard must complement, not replace, `--max-context-tokens`, because a few large
+schemas can consume more context than many small ones.
+
 ### 5.3 Task set
 
 The task file is the most important artifact in the project: it is what the maintainer of
@@ -183,6 +191,15 @@ choice, and if you do not neutralise it you are measuring an artifact of the ord
 than the ambiguity of the descriptions. This is one of the technically most important points
 in the whole project.
 
+A real invocation accepts at most 50 total trials by default, counted after task filters as
+`selected tasks × repeat`. `--max-trials` / `trials.maxTrials` may raise that budget only up
+to the absolute execution ceiling of 1,000. A dry run may preview a larger safe-to-allocate
+plan, but must say that real execution is blocked.
+
+The same preview-before-execution rule applies to surface size: a dry run can show a plan
+above the configured tool budget, but a real run must stop before provider construction or
+network access. The default is 6 tools and the absolute maximum is 1,000.
+
 Repeats measure trial-level stability for that prepared task. They do not create new
 intents or make the Wilson interval an estimate of performance on unseen requests.
 
@@ -207,9 +224,10 @@ it return logprobs? The report must carry these, because they determine how much
 the reproducibility. Do not promise determinism the provider does not guarantee: use
 `repeat` and report the variance.
 
-Handle rate limits and transient errors with exponential-backoff retry, and distinguish in
-the report between trials that failed on a network error and trials where the model chose
-nothing. Conflating them falsifies every metric.
+Distinguish in the report between trials that failed on a network error and trials where the
+model chose nothing. Conflating them falsifies every metric. Built-in HTTP providers do not
+retry by default because a retry can be another billable request; programmatic callers may
+opt into exponential-backoff retries explicitly.
 
 ### 5.6 Scorer and metrics
 
@@ -256,6 +274,8 @@ A first-class job in its own right (§2), not a preface to the measurement:
 - **Lexical overlap** between tools: n-gram similarity over name plus description. It serves
   as a zero-cost predictor of confusion, and in the report it belongs next to the measured
   confusion: where the two diverge there is something interesting to understand.
+- **Surface size** above 6 tools, as a cautious warning rather than a universal quality
+  verdict. Report it alongside the context-token estimate.
 - Use of deprecated features in the surface.
 
 ### 5.8 Reporters
@@ -288,26 +308,31 @@ whichtool mcp                         # run as an MCP server
 validate a task file, dry-run or run the single-turn routing benchmark, and compare saved
 results. It does not generate task sets or execute an agent workflow. Startup accepts only
 an explicit data-only JSON config; real provider calls require the operator capability
-`--allow-paid-runs`.
+`--allow-paid-runs`. Its real-run budget is operator-owned: startup `--max-trials`, then the
+reviewed config, then 50; its tool budget follows startup `--max-tools`, reviewed config,
+then 6. An agent tool call cannot raise either budget, and 1,000 remains absolute for both.
 
 Main flags for `run`:
 
 ```
 --tasks <file>            --provider <name>        --model <id>
---repeat <n>              --concurrency <n>        --temperature <f>
+--repeat <n>              --max-trials <n>         --max-tools <n>
+--concurrency <n>
+--temperature <f>
 --seed <n>                --permute / --no-permute
 --format <terminal|json|markdown|html|junit|badge>   --out <file>
 --min-accuracy <f>        --max-over-trigger <f>   --max-context-tokens <n>
 --only <tag>              --skip <tag>
---dry-run                 # count the trials and estimate the token cost, without calling the model
+--dry-run                 # count trials and prompt tokens, without calling the model
 ```
 
-`--dry-run` with a cost estimate is essential: people are afraid to point an LLM tool at
-something without knowing what it will spend.
+`--dry-run` is essential before a paid run. Its prompt-token figure is a lower bound, not a
+price estimate: output and reasoning tokens are additional, and provider pricing can change.
 
 Exit codes: `0` execution was healthy and every threshold met, `1` a quality threshold was
-violated, `2` execution was unhealthy or failed. Three distinct values, never reused for
-anything else.
+violated, `2` execution was unhealthy or failed, and `130` means the operator interrupted a
+run with `Ctrl+C`. Interruption aborts in-flight provider requests and writes no partial
+report. MCP evaluations remain cancellable through the protocol.
 
 ## 7. Configuration
 
@@ -321,7 +346,14 @@ export default defineConfig({
   target: { transport: 'stdio', command: 'bun run ./src/server.ts' },
   tasks: './whichtool.tasks.yaml',
   provider: { name: 'ollama', model: 'qwen3:4b' },
-  trials: { repeat: 5, permute: true, temperature: 0, concurrency: 4 },
+  trials: {
+    repeat: 5,
+    maxTrials: 50,
+    maxTools: 6,
+    permute: true,
+    temperature: 0,
+    concurrency: 4,
+  },
   thresholds: {
     minAccuracy: 0.9,
     maxOverTrigger: 0.05,
@@ -404,6 +436,9 @@ Use `bun test`, no additional framework.
 
 ## 11. Distribution
 
+- Automated release publication is temporarily paused. The npm package may be unavailable,
+  while the public source remains runnable from a GitHub checkout. Registry, Action, and
+  container distribution targets below remain the intended future channels.
 - **npm**, runnable with `npx whichtool` and `bunx whichtool`. It must work on Node: verify
   that in CI with a Node and Bun matrix.
 - **Compiled binary builds** exist for Linux, macOS and Windows, but are not distributed.

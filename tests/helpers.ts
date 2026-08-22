@@ -56,6 +56,8 @@ export interface FakeRuntimeOptions {
   terminalWidth?: number
   /** Lines the MCP server should read, in order. The stream ends when they run out. */
   stdin?: readonly string[]
+  /** Optional human-interrupt signal for cancellation tests. */
+  signal?: AbortSignal
 }
 
 async function* stdinLines(lines: readonly string[]): AsyncIterable<string> {
@@ -89,6 +91,7 @@ export function createFakeRuntime(options: FakeRuntimeOptions = {}): FakeRuntime
 
   return {
     name: 'node',
+    ...(options.signal === undefined ? {} : { signal: options.signal }),
     async readTextFile(path) {
       const absolute = toAbsolute(path)
       const inMemory = files.get(absolute) ?? written.get(absolute)
