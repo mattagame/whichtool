@@ -1,0 +1,97 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      {
+        "name": "list_issues",
+        "description": "Returns issues from the project tracker. Supports filtering, sorting and pagination.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "projectKey": { "type": "string" },
+            "status": { "type": "string", "enum": ["open", "in_progress", "done", "wontfix"] },
+            "limit": { "type": "integer" },
+            "cursor": { "type": "string" }
+          },
+          "required": ["projectKey"]
+        },
+        "annotations": { "readOnlyHint": true }
+      },
+      {
+        "name": "search_issues",
+        "description": "Returns issues from the project tracker. Supports filtering, sorting and pagination.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "projectKey": { "type": "string" },
+            "text": { "type": "string" },
+            "limit": { "type": "integer" }
+          },
+          "required": ["projectKey", "text"]
+        },
+        "annotations": { "readOnlyHint": true }
+      },
+      {
+        "name": "get_issue",
+        "description": "Get an issue by its key and return it.",
+        "inputSchema": {
+          "type": "object",
+          "properties": { "issueKey": { "type": "string" } },
+          "required": ["issueKey"]
+        },
+        "annotations": { "readOnlyHint": true }
+      },
+      {
+        "name": "fetch_issue_details",
+        "description": "Fetch an issue by its key and return the details.",
+        "inputSchema": {
+          "type": "object",
+          "properties": { "key": { "type": "string" } },
+          "required": ["key"]
+        },
+        "annotations": { "readOnlyHint": true }
+      },
+      {
+        "name": "close_issue",
+        "description": "Move an issue to the done state and stamp it with the closing user.",
+        "inputSchema": {
+          "type": "object",
+          "properties": { "issueKey": { "type": "string" }, "resolution": { "type": "string" } },
+          "required": ["issueKey"]
+        },
+        "annotations": { "readOnlyHint": true }
+      },
+      {
+        "name": "deleteIssue",
+        "description": "Delete an issue permanently, along with its comments and attachments.",
+        "inputSchema": {
+          "type": "object",
+          "properties": { "issueKey": { "type": "string" } },
+          "required": ["issueKey"]
+        },
+        "annotations": { "destructiveHint": false }
+      },
+      {
+        "name": "issues.comment.add",
+        "description": "Add a comment to an issue.",
+        "inputSchema": {
+          "type": "object",
+          "properties": { "issueKey": { "type": "string" }, "body": { "type": "string" } },
+          "required": ["issueKey", "body"]
+        }
+      },
+      {
+        "name": "update_issue",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "issueKey": { "type": "string" },
+            "patch": { "type": "object" }
+          },
+          "required": ["issueKey", "patch"]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "tools": [
+    {
+      "name": "list_users",
+      "description": "Returns users from the workspace directory. Supports filtering and pagination.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "description": "Maximum number of users to return." },
+          "cursor": { "type": "string", "description": "Pagination cursor from a previous call." },
+          "filter": { "type": "string", "description": "Optional filter expression." }
+        },
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "search_users",
+      "description": "Returns users from the workspace directory. Supports filtering and pagination.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Text to match against name and email." },
+          "limit": { "type": "integer", "description": "Maximum number of users to return." },
+          "cursor": { "type": "string", "description": "Pagination cursor from a previous call." }
+        },
+        "required": ["query"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "get_user",
+      "description": "Returns a single user by their workspace id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "userId": { "type": "string", "description": "Workspace user id." } },
+        "required": ["userId"],
+        "additionalProperties": false
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    },
+    {
+      "name": "count_users",
+      "description": "Returns how many users the workspace directory contains.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "annotations": { "readOnlyHint": true, "openWorldHint": false }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+[install]
+exact = true
+
+[test]
+# Golden-file reporter tests read fixtures relative to the repo root.
+root = "."

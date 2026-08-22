@@ -1,0 +1,174 @@
+name: whichtool
+description: Measure whether a model picks the right tool from your MCP server, and fail the check when it stops doing so.
+author: Matt A. Game
+
+branding:
+  icon: crosshair
+  color: purple
+
+inputs:
+  target:
+    description: The MCP server. A captured tools/list, a URL, or a command with transport = stdio.
+    required: true
+  transport:
+    description: snapshot | http | stdio. Inferred from the target when omitted.
+    required: false
+  tasks:
+    description: Path to the task set.
+    required: false
+    default: whichtool.tasks.yaml
+  provider:
+    description: Provider name. Omit to run only the free static pass.
+    required: false
+  model:
+    description: Model id.
+    required: false
+  repeat:
+    description: Trials per task.
+    required: false
+    default: '5'
+  cache:
+    description: >-
+      Persist prompts, tool definitions, and provider responses in GitHub's cache. Opt in
+      only for non-sensitive evaluations.
+    required: false
+    default: 'false'
+  min-accuracy:
+    description: Fail below this single-call accuracy.
+    required: false
+  max-over-trigger:
+    description: Fail above this over-trigger rate.
+    required: false
+  max-context-tokens:
+    description: Fail above this surface token cost.
+    required: false
+  base-run:
+    description: A saved run to compare against. Produces a delta instead of a bare result.
+    required: false
+  max-accuracy-drop:
+    description: Fail when accuracy falls by more than this and the paired trial evidence is distinguishable.
+    required: false
+  comment:
+    description: Write the report into the job summary.
+    required: false
+    default: 'true'
+  whichtool-version:
+    description: Version to run, as an npm spec.
+    required: false
+    default: 0.1.0
+
+outputs:
+  accuracy:
+    description: Single-call accuracy as a fraction, or empty when no run was performed.
+    value: ${{ steps.summarise.outputs.accuracy }}
+  report:
+    description: Path to the saved run JSON, or empty.
+    value: ${{ steps.summarise.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    # Costs nothing and needs no key, so it always runs and always gates.
+    - name: Inspect the surface
+      shell: bash
+      env:
+        WT_VERSION: ${{ inputs.whichtool-version }}
+        WT_TARGET: ${{ inputs.target }}
+        WT_TRANSPORT: ${{ inputs.transport }}
+        WT_MAX_CONTEXT_TOKENS: ${{ inputs.max-context-tokens }}
+      run: |
+        args=(inspect "$WT_TARGET")
+        [[ -n "$WT_TRANSPORT" ]] && args+=(--transport "$WT_TRANSPORT")
+        [[ -n "$WT_MAX_CONTEXT_TOKENS" ]] && args+=(--max-context-tokens "$WT_MAX_CONTEXT_TOKENS")
+        npx --yes "whichtool@$WT_VERSION" "${args[@]}"
+
+    - name: Validate the task set
+      if: hashFiles(inputs.tasks) != ''
+      shell: bash
+      env:
+        WT_VERSION: ${{ inputs.whichtool-version }}
+        WT_TARGET: ${{ inputs.target }}
+        WT_TASKS: ${{ inputs.tasks }}
+        WT_TRANSPORT: ${{ inputs.transport }}
+      run: |
+        args=(tasks lint "$WT_TARGET" --tasks "$WT_TASKS")
+        [[ -n "$WT_TRANSPORT" ]] && args+=(--transport "$WT_TRANSPORT")
+        npx --yes "whichtool@$WT_VERSION" "${args[@]}"
+
+    # Trial material can be sensitive, so persistence is explicit and exact-key only.
+    - name: Restore the trial cache
+      if: inputs.provider != '' && inputs.cache == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: .whichtool-cache
+        key: whichtool-v1-${{ github.ref }}-${{ runner.os }}-${{ hashFiles(inputs.target, inputs.tasks) }}
+
+    - name: Run the trials
+      if: inputs.provider != ''
+      shell: bash
+      env:
+        WT_VERSION: ${{ inputs.whichtool-version }}
+        WT_TARGET: ${{ inputs.target }}
+        WT_TASKS: ${{ inputs.tasks }}
+        WT_PROVIDER: ${{ inputs.provider }}
+        WT_MODEL: ${{ inputs.model }}
+        WT_TRANSPORT: ${{ inputs.transport }}
+        WT_REPEAT: ${{ inputs.repeat }}
+        WT_MIN_ACCURACY: ${{ inputs.min-accuracy }}
+        WT_MAX_OVER_TRIGGER: ${{ inputs.max-over-trigger }}
+        WT_CACHE: ${{ inputs.cache }}
+      run: |
+        args=(run "$WT_TARGET" --tasks "$WT_TASKS" --provider "$WT_PROVIDER" --repeat "$WT_REPEAT")
+        if [[ "$WT_CACHE" == "true" ]]; then args+=(--cache); else args+=(--no-cache); fi
+        [[ -n "$WT_MODEL" ]] && args+=(--model "$WT_MODEL")
+        [[ -n "$WT_TRANSPORT" ]] && args+=(--transport "$WT_TRANSPORT")
+        [[ -n "$WT_MIN_ACCURACY" ]] && args+=(--min-accuracy "$WT_MIN_ACCURACY")
+        [[ -n "$WT_MAX_OVER_TRIGGER" ]] && args+=(--max-over-trigger "$WT_MAX_OVER_TRIGGER")
+        npx --yes "whichtool@$WT_VERSION" "${args[@]}" --format json --out whichtool-run.json
+
+    - name: Compare against the base run
+      if: inputs.provider != '' && inputs.base-run != ''
+      shell: bash
+      env:
+        WT_VERSION: ${{ inputs.whichtool-version }}
+        WT_BASE_RUN: ${{ inputs.base-run }}
+        WT_MAX_ACCURACY_DROP: ${{ inputs.max-accuracy-drop }}
+      run: |
+        args=(diff "$WT_BASE_RUN" whichtool-run.json)
+        [[ -n "$WT_MAX_ACCURACY_DROP" ]] && args+=(--max-accuracy-drop "$WT_MAX_ACCURACY_DROP")
+        npx --yes "whichtool@$WT_VERSION" "${args[@]}" --format markdown --out whichtool-delta.md
+
+    # `always()`: the report is most worth reading when the step above went red.
+    - name: Write the job summary
+      if: always() && inputs.comment == 'true'
+      shell: bash
+      env:
+        WT_VERSION: ${{ inputs.whichtool-version }}
+        WT_TARGET: ${{ inputs.target }}
+        WT_TRANSPORT: ${{ inputs.transport }}
+      run: |
+        if [ -f whichtool-delta.md ]; then
+          cat whichtool-delta.md >> "$GITHUB_STEP_SUMMARY"
+        elif [ -f whichtool-run.json ]; then
+          npx --yes "whichtool@$WT_VERSION" report whichtool-run.json --format markdown \
+            >> "$GITHUB_STEP_SUMMARY"
+        else
+          args=(inspect "$WT_TARGET" --format markdown)
+          [[ -n "$WT_TRANSPORT" ]] && args+=(--transport "$WT_TRANSPORT")
+          npx --yes "whichtool@$WT_VERSION" "${args[@]}" >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Expose the result
+      id: summarise
+      if: always()
+      shell: bash
+      run: |
+        if [ -f whichtool-run.json ]; then
+          # The denominator is the authoritative signal that a rate was measured; an
+          # unmeasured rate is represented as `null` on the wire.
+          node -e 'const a=require("./whichtool-run.json").metrics.accuracy;console.log("accuracy="+(a.denominator===0||typeof a.value!=="number"?"":a.value))' >> "$GITHUB_OUTPUT"
+          echo "report=whichtool-run.json" >> "$GITHUB_OUTPUT"
+        else
+          echo "accuracy=" >> "$GITHUB_OUTPUT"
+          echo "report=" >> "$GITHUB_OUTPUT"
+        fi

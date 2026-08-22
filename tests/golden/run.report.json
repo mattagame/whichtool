@@ -1,0 +1,1455 @@
+{
+  "schemaVersion": "whichtool.run/2",
+  "reproducibility": {
+    "whichtoolVersion": "0.1.0",
+    "provider": "mock",
+    "model": "mock-1",
+    "endpoint": null,
+    "requestFingerprint": null,
+    "providerCapabilities": {
+      "seed": true,
+      "temperatureZero": true,
+      "logprobs": false,
+      "disableThinking": true
+    },
+    "temperature": 0,
+    "reasoningEffort": null,
+    "seed": 42,
+    "repeat": 3,
+    "permuted": true,
+    "concurrency": 4,
+    "surfaceHash": "sha256:5eabb107f25f120b6cb590cbe6ec52215375225fda7636f95807d68297741142",
+    "taskSetVersion": 1,
+    "taskSetSource": "list-search.tasks.yaml",
+    "taskSetSurface": null
+  },
+  "target": {
+    "transport": "snapshot",
+    "ref": "list-search-pair.json"
+  },
+  "tasks": {
+    "inFile": 10,
+    "selected": 10,
+    "distractors": 3,
+    "only": [],
+    "skip": [],
+    "list": [
+      {
+        "id": "users.list.basic",
+        "prompt": "Show me all the users in the workspace",
+        "expected": "list_users",
+        "tags": [
+          "users",
+          "read"
+        ]
+      },
+      {
+        "id": "users.list.paged",
+        "prompt": "Give me the next page of workspace users after this cursor: abc123",
+        "expected": "list_users",
+        "tags": [
+          "users",
+          "read"
+        ]
+      },
+      {
+        "id": "users.list.everyone",
+        "prompt": "I need the full roster of everyone in this workspace",
+        "expected": "list_users",
+        "tags": [
+          "users",
+          "read"
+        ]
+      },
+      {
+        "id": "users.search.byname",
+        "prompt": "Find the user whose name contains 'rossi'",
+        "expected": "search_users",
+        "tags": [
+          "users",
+          "read"
+        ]
+      },
+      {
+        "id": "users.search.byemail",
+        "prompt": "Which user has an email address matching acme.example?",
+        "expected": "search_users",
+        "tags": [
+          "users",
+          "read"
+        ]
+      },
+      {
+        "id": "users.get.byid",
+        "prompt": "Look up the user with id U-4821 and show their details",
+        "expected": "get_user",
+        "tags": [
+          "users",
+          "read"
+        ]
+      },
+      {
+        "id": "users.count.total",
+        "prompt": "How many users does this workspace have in total?",
+        "expected": "count_users",
+        "tags": [
+          "users",
+          "read"
+        ]
+      },
+      {
+        "id": "distractor.delete",
+        "prompt": "Permanently delete the account belonging to Rossi",
+        "expected": null,
+        "tags": [
+          "distractor"
+        ]
+      },
+      {
+        "id": "distractor.invite",
+        "prompt": "Invite marco@example.com to join this workspace as an editor",
+        "expected": null,
+        "tags": [
+          "distractor"
+        ]
+      },
+      {
+        "id": "distractor.password",
+        "prompt": "Reset the password for user U-4821 and email them the new one",
+        "expected": null,
+        "tags": [
+          "distractor"
+        ]
+      }
+    ]
+  },
+  "metrics": {
+    "trials": {
+      "planned": 30,
+      "scored": 30,
+      "errored": 0
+    },
+    "accuracy": {
+      "numerator": 15,
+      "denominator": 21,
+      "value": 0.7142857142857143,
+      "ci95": [
+        0.5004361928391441,
+        0.8618613704787788
+      ]
+    },
+    "abstention": {
+      "numerator": 0,
+      "denominator": 21,
+      "value": 0,
+      "ci95": [
+        0,
+        0.154639018924847
+      ]
+    },
+    "overTrigger": {
+      "numerator": 3,
+      "denominator": 9,
+      "value": 0.3333333333333333,
+      "ci95": [
+        0.1205838183869109,
+        0.6457978644196036
+      ]
+    },
+    "phantom": {
+      "numerator": 0,
+      "denominator": 21,
+      "value": 0,
+      "ci95": [
+        0,
+        0.154639018924847
+      ]
+    },
+    "multiCallRate": {
+      "numerator": 0,
+      "denominator": 30,
+      "value": 0,
+      "ci95": [
+        0,
+        0.11351339317396876
+      ]
+    },
+    "clarification": {
+      "numerator": 0,
+      "denominator": 30,
+      "value": 0,
+      "ci95": [
+        0,
+        0.11351339317396876
+      ]
+    },
+    "byTool": [
+      {
+        "tool": "search_users",
+        "accuracy": {
+          "numerator": 3,
+          "denominator": 6,
+          "value": 0.5,
+          "ci95": [
+            0.1876163064826506,
+            0.8123836935173494
+          ]
+        },
+        "confusedWith": [
+          {
+            "tool": "list_users",
+            "count": 3
+          }
+        ],
+        "abstained": 0,
+        "phantom": 0,
+        "errors": 0,
+        "argumentAccuracy": {
+          "numerator": 0,
+          "denominator": 3,
+          "value": 0,
+          "ci95": [
+            5.551115123125783e-17,
+            0.5614970317550454
+          ]
+        },
+        "hallucinatedParameters": 0,
+        "contextTokens": 158
+      },
+      {
+        "tool": "list_users",
+        "accuracy": {
+          "numerator": 6,
+          "denominator": 9,
+          "value": 0.6666666666666666,
+          "ci95": [
+            0.3542021355803963,
+            0.879416181613089
+          ]
+        },
+        "confusedWith": [
+          {
+            "tool": "search_users",
+            "count": 3
+          }
+        ],
+        "abstained": 0,
+        "phantom": 0,
+        "errors": 0,
+        "argumentAccuracy": {
+          "numerator": 6,
+          "denominator": 6,
+          "value": 1,
+          "ci95": [
+            0.6096657120978346,
+            1
+          ]
+        },
+        "hallucinatedParameters": 0,
+        "contextTokens": 146
+      },
+      {
+        "tool": "count_users",
+        "accuracy": {
+          "numerator": 3,
+          "denominator": 3,
+          "value": 1,
+          "ci95": [
+            0.4385029682449546,
+            1
+          ]
+        },
+        "confusedWith": [],
+        "abstained": 0,
+        "phantom": 0,
+        "errors": 0,
+        "argumentAccuracy": {
+          "numerator": 0,
+          "denominator": 0,
+          "value": null,
+          "ci95": null
+        },
+        "hallucinatedParameters": 0,
+        "contextTokens": 59
+      },
+      {
+        "tool": "get_user",
+        "accuracy": {
+          "numerator": 3,
+          "denominator": 3,
+          "value": 1,
+          "ci95": [
+            0.4385029682449546,
+            1
+          ]
+        },
+        "confusedWith": [],
+        "abstained": 0,
+        "phantom": 0,
+        "errors": 0,
+        "argumentAccuracy": {
+          "numerator": 0,
+          "denominator": 3,
+          "value": 0,
+          "ci95": [
+            5.551115123125783e-17,
+            0.5614970317550454
+          ]
+        },
+        "hallucinatedParameters": 0,
+        "contextTokens": 86
+      }
+    ],
+    "confusionMatrix": {
+      "list_users": {
+        "search_users": 3,
+        "list_users": 6
+      },
+      "search_users": {
+        "search_users": 3,
+        "list_users": 3
+      },
+      "get_user": {
+        "get_user": 3
+      },
+      "count_users": {
+        "count_users": 3
+      },
+      "(none)": {
+        "(none)": 6,
+        "list_users": 3
+      }
+    },
+    "confusionPairs": [
+      {
+        "tools": [
+          "list_users",
+          "search_users"
+        ],
+        "swaps": 6,
+        "rate": {
+          "numerator": 6,
+          "denominator": 15,
+          "value": 0.4,
+          "ci95": [
+            0.1982449614134158,
+            0.6425316987937539
+          ]
+        },
+        "aChosenWhenBExpected": 3,
+        "bChosenWhenAExpected": 3
+      }
+    ],
+    "position": {
+      "buckets": [
+        {
+          "position": 0,
+          "accuracy": {
+            "numerator": 1,
+            "denominator": 1,
+            "value": 1,
+            "ci95": [
+              0.20654931437723745,
+              1
+            ]
+          }
+        },
+        {
+          "position": 1,
+          "accuracy": {
+            "numerator": 5,
+            "denominator": 5,
+            "value": 1,
+            "ci95": [
+              0.5655175352168251,
+              1
+            ]
+          }
+        },
+        {
+          "position": 2,
+          "accuracy": {
+            "numerator": 8,
+            "denominator": 12,
+            "value": 0.6666666666666666,
+            "ci95": [
+              0.39062208887279953,
+              0.8618799089087867
+            ]
+          }
+        },
+        {
+          "position": 3,
+          "accuracy": {
+            "numerator": 1,
+            "denominator": 3,
+            "value": 0.3333333333333333,
+            "ci95": [
+              0.06149194472039621,
+              0.7923403991979522
+            ]
+          }
+        }
+      ],
+      "spread": 0,
+      "comparableTasks": 6,
+      "method": "mean within-task gap between the best and worst position, over tasks tried at two or more positions; pooling positions across tasks would report task difficulty as a position effect"
+    },
+    "minTrialsPerTool": 5
+  },
+  "contextCost": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 449,
+    "byTool": {
+      "count_users": {
+        "total": 59,
+        "name": 7,
+        "description": 17,
+        "schema": 22,
+        "envelope": 13
+      },
+      "get_user": {
+        "total": 86,
+        "name": 5,
+        "description": 15,
+        "schema": 53,
+        "envelope": 13
+      },
+      "list_users": {
+        "total": 146,
+        "name": 6,
+        "description": 24,
+        "schema": 103,
+        "envelope": 13
+      },
+      "search_users": {
+        "total": 158,
+        "name": 7,
+        "description": 24,
+        "schema": 114,
+        "envelope": 13
+      }
+    }
+  },
+  "diagnostics": [
+    {
+      "code": "threshold/maxOverTrigger",
+      "severity": "error",
+      "message": "maxOverTrigger: 0.333 against a limit of 0.05.",
+      "detail": {
+        "limit": 0.05,
+        "actual": 0.3333
+      }
+    },
+    {
+      "code": "threshold/minAccuracy",
+      "severity": "error",
+      "message": "minAccuracy: 0.714 against a limit of 0.9.",
+      "detail": {
+        "limit": 0.9,
+        "actual": 0.7143
+      }
+    },
+    {
+      "code": "run/confusion-pair",
+      "severity": "warning",
+      "message": "`list_users` and `search_users` were swapped 6 times across 15 trials where one of them was expected.",
+      "tools": [
+        "list_users",
+        "search_users"
+      ],
+      "detail": {
+        "swaps": 6,
+        "denominator": 15
+      }
+    },
+    {
+      "code": "run/thin-measurement",
+      "severity": "warning",
+      "message": "2 tools rest on fewer than 5 trials, so their accuracy carries an interval too wide to act on. Add tasks or raise --repeat before drawing a conclusion about: count_users, get_user.",
+      "tools": [
+        "count_users",
+        "get_user"
+      ]
+    }
+  ],
+  "thresholds": [
+    {
+      "name": "minAccuracy",
+      "limit": 0.9,
+      "actual": 0.7142857142857143,
+      "ok": false
+    },
+    {
+      "name": "maxOverTrigger",
+      "limit": 0.05,
+      "actual": 0.3333333333333333,
+      "ok": false
+    }
+  ],
+  "thresholdsOk": false,
+  "execution": {
+    "ok": true,
+    "planned": 30,
+    "completed": 30,
+    "scored": 30,
+    "errored": 0,
+    "errorRate": {
+      "numerator": 0,
+      "denominator": 30,
+      "value": 0,
+      "ci95": [
+        0,
+        0.11351339317396876
+      ]
+    },
+    "maxErrorRate": 0.1,
+    "minScored": 1
+  },
+  "ok": false,
+  "durationMs": 0,
+  "trials": [
+    {
+      "taskId": "users.list.basic",
+      "trialIndex": 0,
+      "expected": "list_users",
+      "pick": "search_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "search_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "get_user",
+        "count_users",
+        "list_users",
+        "search_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "wrong-tool",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "query"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.list.basic",
+      "trialIndex": 1,
+      "expected": "list_users",
+      "pick": "search_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "search_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "count_users",
+        "get_user",
+        "list_users",
+        "search_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "wrong-tool",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "query"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.list.basic",
+      "trialIndex": 2,
+      "expected": "list_users",
+      "pick": "search_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "search_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "search_users",
+        "get_user",
+        "list_users",
+        "count_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "wrong-tool",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "query"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.list.paged",
+      "trialIndex": 0,
+      "expected": "list_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "search_users",
+        "list_users",
+        "count_users",
+        "get_user"
+      ],
+      "expectedPosition": 1,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.list.paged",
+      "trialIndex": 1,
+      "expected": "list_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "search_users",
+        "get_user",
+        "list_users",
+        "count_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.list.paged",
+      "trialIndex": 2,
+      "expected": "list_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "get_user",
+        "count_users",
+        "list_users",
+        "search_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.list.everyone",
+      "trialIndex": 0,
+      "expected": "list_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "get_user",
+        "count_users",
+        "list_users",
+        "search_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.list.everyone",
+      "trialIndex": 1,
+      "expected": "list_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "search_users",
+        "get_user",
+        "list_users",
+        "count_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.list.everyone",
+      "trialIndex": 2,
+      "expected": "list_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "count_users",
+        "list_users",
+        "search_users",
+        "get_user"
+      ],
+      "expectedPosition": 1,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.search.byname",
+      "trialIndex": 0,
+      "expected": "search_users",
+      "pick": "search_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "search_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "count_users",
+        "search_users",
+        "list_users",
+        "get_user"
+      ],
+      "expectedPosition": 1,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "query"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.search.byname",
+      "trialIndex": 1,
+      "expected": "search_users",
+      "pick": "search_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "search_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "list_users",
+        "search_users",
+        "get_user",
+        "count_users"
+      ],
+      "expectedPosition": 1,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "query"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.search.byname",
+      "trialIndex": 2,
+      "expected": "search_users",
+      "pick": "search_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "search_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "list_users",
+        "count_users",
+        "search_users",
+        "get_user"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "query"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.search.byemail",
+      "trialIndex": 0,
+      "expected": "search_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "list_users",
+        "get_user",
+        "count_users",
+        "search_users"
+      ],
+      "expectedPosition": 3,
+      "latencyMs": 0,
+      "verdict": "wrong-tool",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.search.byemail",
+      "trialIndex": 1,
+      "expected": "search_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "list_users",
+        "get_user",
+        "search_users",
+        "count_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "wrong-tool",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.search.byemail",
+      "trialIndex": 2,
+      "expected": "search_users",
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "count_users",
+        "list_users",
+        "get_user",
+        "search_users"
+      ],
+      "expectedPosition": 3,
+      "latencyMs": 0,
+      "verdict": "wrong-tool",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.get.byid",
+      "trialIndex": 0,
+      "expected": "get_user",
+      "pick": "get_user",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "get_user",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "list_users",
+        "get_user",
+        "search_users",
+        "count_users"
+      ],
+      "expectedPosition": 1,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "userId"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.get.byid",
+      "trialIndex": 1,
+      "expected": "get_user",
+      "pick": "get_user",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "get_user",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "count_users",
+        "search_users",
+        "get_user",
+        "list_users"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "userId"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.get.byid",
+      "trialIndex": 2,
+      "expected": "get_user",
+      "pick": "get_user",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "get_user",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "get_user",
+        "count_users",
+        "search_users",
+        "list_users"
+      ],
+      "expectedPosition": 0,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [
+          "userId"
+        ],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "users.count.total",
+      "trialIndex": 0,
+      "expected": "count_users",
+      "pick": "count_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "count_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "search_users",
+        "list_users",
+        "count_users",
+        "get_user"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": true
+      }
+    },
+    {
+      "taskId": "users.count.total",
+      "trialIndex": 1,
+      "expected": "count_users",
+      "pick": "count_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "count_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "get_user",
+        "search_users",
+        "list_users",
+        "count_users"
+      ],
+      "expectedPosition": 3,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": true
+      }
+    },
+    {
+      "taskId": "users.count.total",
+      "trialIndex": 2,
+      "expected": "count_users",
+      "pick": "count_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "count_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "list_users",
+        "search_users",
+        "count_users",
+        "get_user"
+      ],
+      "expectedPosition": 2,
+      "latencyMs": 0,
+      "verdict": "correct",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": true
+      }
+    },
+    {
+      "taskId": "distractor.delete",
+      "trialIndex": 0,
+      "expected": null,
+      "pick": null,
+      "arguments": null,
+      "calls": [],
+      "text": "I cannot help with that.",
+      "callCount": 0,
+      "order": [
+        "count_users",
+        "get_user",
+        "list_users",
+        "search_users"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "correct-abstention",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false
+    },
+    {
+      "taskId": "distractor.delete",
+      "trialIndex": 1,
+      "expected": null,
+      "pick": null,
+      "arguments": null,
+      "calls": [],
+      "text": "I cannot help with that.",
+      "callCount": 0,
+      "order": [
+        "count_users",
+        "list_users",
+        "get_user",
+        "search_users"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "correct-abstention",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false
+    },
+    {
+      "taskId": "distractor.delete",
+      "trialIndex": 2,
+      "expected": null,
+      "pick": null,
+      "arguments": null,
+      "calls": [],
+      "text": "I cannot help with that.",
+      "callCount": 0,
+      "order": [
+        "count_users",
+        "list_users",
+        "search_users",
+        "get_user"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "correct-abstention",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false
+    },
+    {
+      "taskId": "distractor.invite",
+      "trialIndex": 0,
+      "expected": null,
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "search_users",
+        "count_users",
+        "get_user",
+        "list_users"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "over-triggered",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "distractor.invite",
+      "trialIndex": 1,
+      "expected": null,
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "get_user",
+        "list_users",
+        "count_users",
+        "search_users"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "over-triggered",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "distractor.invite",
+      "trialIndex": 2,
+      "expected": null,
+      "pick": "list_users",
+      "arguments": null,
+      "calls": [
+        {
+          "name": "list_users",
+          "arguments": null
+        }
+      ],
+      "text": "",
+      "callCount": 1,
+      "order": [
+        "get_user",
+        "search_users",
+        "count_users",
+        "list_users"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "over-triggered",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false,
+      "argumentCheck": {
+        "missingRequired": [],
+        "hallucinated": [],
+        "wrongType": [],
+        "parsed": true,
+        "vacuous": false
+      }
+    },
+    {
+      "taskId": "distractor.password",
+      "trialIndex": 0,
+      "expected": null,
+      "pick": null,
+      "arguments": null,
+      "calls": [],
+      "text": "I cannot help with that.",
+      "callCount": 0,
+      "order": [
+        "search_users",
+        "list_users",
+        "count_users",
+        "get_user"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "correct-abstention",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false
+    },
+    {
+      "taskId": "distractor.password",
+      "trialIndex": 1,
+      "expected": null,
+      "pick": null,
+      "arguments": null,
+      "calls": [],
+      "text": "I cannot help with that.",
+      "callCount": 0,
+      "order": [
+        "search_users",
+        "count_users",
+        "get_user",
+        "list_users"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "correct-abstention",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false
+    },
+    {
+      "taskId": "distractor.password",
+      "trialIndex": 2,
+      "expected": null,
+      "pick": null,
+      "arguments": null,
+      "calls": [],
+      "text": "I cannot help with that.",
+      "callCount": 0,
+      "order": [
+        "count_users",
+        "list_users",
+        "get_user",
+        "search_users"
+      ],
+      "expectedPosition": -1,
+      "latencyMs": 0,
+      "verdict": "correct-abstention",
+      "askedForClarification": false,
+      "unexpectedAdditionalCalls": false
+    }
+  ]
+}

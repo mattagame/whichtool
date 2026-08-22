@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "get-fetch-pair.json"
+  },
+  "surface": {
+    "hash": "sha256:97021b627b48e27602be69056e5a110a4d9547282a8eb39effa021f2b7bbef08",
+    "toolCount": 3,
+    "tools": [
+      {
+        "name": "fetch_document",
+        "hasDescription": true,
+        "descriptionLength": 46,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 69,
+          "name": 7,
+          "description": 15,
+          "schema": 34,
+          "envelope": 13
+        },
+        "tokenShare": 0.3484848484848485,
+        "servedIndex": 1,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_document",
+        "hasDescription": true,
+        "descriptionLength": 45,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 63,
+          "name": 6,
+          "description": 14,
+          "schema": 30,
+          "envelope": 13
+        },
+        "tokenShare": 0.3181818181818182,
+        "servedIndex": 0,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "read_document",
+        "hasDescription": true,
+        "descriptionLength": 49,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 66,
+          "name": 6,
+          "description": 15,
+          "schema": 32,
+          "envelope": 13
+        },
+        "tokenShare": 0.3333333333333333,
+        "servedIndex": 2,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 198,
+    "byTool": {
+      "fetch_document": {
+        "total": 69,
+        "name": 7,
+        "description": 15,
+        "schema": 34,
+        "envelope": 13
+      },
+      "get_document": {
+        "total": 63,
+        "name": 6,
+        "description": 14,
+        "schema": 30,
+        "envelope": 13
+      },
+      "read_document": {
+        "total": 66,
+        "name": 6,
+        "description": 15,
+        "schema": 32,
+        "envelope": 13
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 3,
+      "annotated": 3,
+      "byHint": {
+        "readOnlyHint": 3,
+        "destructiveHint": 0,
+        "idempotentHint": 0,
+        "openWorldHint": 0
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 3,
+    "pairsReported": 3,
+    "pairs": [
+      {
+        "tools": [
+          "fetch_document",
+          "get_document"
+        ],
+        "score": 0.7603305785123967,
+        "nameScore": 0.5714285714285714,
+        "descriptionScore": 0.8172043010752689,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "document"
+        ]
+      },
+      {
+        "tools": [
+          "fetch_document",
+          "read_document"
+        ],
+        "score": 0.7301587301587301,
+        "nameScore": 0.5517241379310345,
+        "descriptionScore": 0.7835051546391752,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "content",
+          "document"
+        ]
+      },
+      {
+        "tools": [
+          "get_document",
+          "read_document"
+        ],
+        "score": 0.7154471544715447,
+        "nameScore": 0.5925925925925926,
+        "descriptionScore": 0.75,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "document"
+        ]
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": []
+  },
+  "diagnostics": [
+    {
+      "code": "overlap/high",
+      "severity": "warning",
+      "message": "`fetch_document` and `get_document` overlap at 0.76 on name-plus-description. Expect the model to confuse them; `whichtool run` will tell you whether it actually does.",
+      "tools": [
+        "fetch_document",
+        "get_document"
+      ],
+      "detail": {
+        "score": 0.7603
+      }
+    },
+    {
+      "code": "overlap/high",
+      "severity": "warning",
+      "message": "`fetch_document` and `read_document` overlap at 0.73 on name-plus-description. Expect the model to confuse them; `whichtool run` will tell you whether it actually does.",
+      "tools": [
+        "fetch_document",
+        "read_document"
+      ],
+      "detail": {
+        "score": 0.7302
+      }
+    },
+    {
+      "code": "overlap/high",
+      "severity": "warning",
+      "message": "`get_document` and `read_document` overlap at 0.72 on name-plus-description. Expect the model to confuse them; `whichtool run` will tell you whether it actually does.",
+      "tools": [
+        "get_document",
+        "read_document"
+      ],
+      "detail": {
+        "score": 0.7154
+      }
+    }
+  ],
+  "thresholds": [],
+  "analysisOk": true,
+  "thresholdsOk": true,
+  "ok": true
+}

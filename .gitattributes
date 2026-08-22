@@ -1,0 +1,12 @@
+# Line endings are LF in the repository and LF in the working tree, on every platform.
+# Without this, a Windows checkout under core.autocrlf=true produces CRLF everywhere and
+# `bun run format:check` fails on almost every file while CI, on Linux, stays green.
+* text=auto eol=lf
+
+*.png binary
+
+# Captured tool output. Diffing it is the point of committing it, but it is generated,
+# so keep it out of language statistics and collapse it in review by default.
+examples/*/report.* linguist-generated
+tests/golden/** linguist-generated
+bun.lock linguist-generated

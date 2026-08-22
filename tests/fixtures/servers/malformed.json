@@ -1,0 +1,27 @@
+{
+  "tools": [
+    {
+      "name": "list_items",
+      "description": "Return the items in a collection.",
+      "inputSchema": { "type": "object", "properties": {} }
+    },
+    {
+      "name": "list_items",
+      "description": "A second registration of the same name, which MCP does not allow.",
+      "inputSchema": { "type": "object", "properties": {} }
+    },
+    {
+      "description": "This entry has no name at all.",
+      "inputSchema": { "type": "object", "properties": {} }
+    },
+    {
+      "name": "describe_item",
+      "description": { "long": "Return one item by its id.", "short": "Return one item." },
+      "inputSchema": { "type": "object", "properties": { "id": { "type": "string" } } }
+    },
+    {
+      "name": "count_items"
+    },
+    "not-an-object"
+  ]
+}

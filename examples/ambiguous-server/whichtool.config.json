@@ -1,0 +1,5 @@
+{
+  "target": { "transport": "snapshot", "path": "./tools.json" },
+  "thresholds": { "maxContextTokens": 4000 },
+  "report": { "formats": ["terminal", "json"], "out": "./whichtool-report" }
+}

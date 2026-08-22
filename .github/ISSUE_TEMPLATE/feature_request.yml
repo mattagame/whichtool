@@ -1,0 +1,39 @@
+name: Feature request
+description: Something whichtool should do and does not.
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        [SPEC.md](https://github.com/mattagame/whichtool/blob/main/SPEC.md) is the design
+        record and says why several things are the way they are — section 2 on scope and
+        section 13 on what a number from whichtool means are the two worth reading before
+        proposing a change in direction.
+
+        One constraint is not up for discussion: **whichtool never executes a tool.** Any
+        proposal that requires calling a tool on the server under test will be declined,
+        because that property is what makes it safe to point at production.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: |
+        What were you trying to find out about your surface, and where did the tool leave
+        you? Describe the situation rather than the feature — the fix may not be the one
+        you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you think it should do
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you did instead
+      description: How you worked around it, and why that is not good enough.

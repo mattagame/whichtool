@@ -1,0 +1,123 @@
+# Tool-selection check for an MCP server.
+#
+# Two jobs' worth of work in one: a free static pass that runs on every push, and a measured
+# run that compares the pull request against its base branch.
+#
+# Copy to .github/workflows/whichtool.yml and adjust the paths.
+
+name: whichtool
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # Costs nothing and needs no key, so it gates everything else.
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+
+      - name: Validate the task set
+        run: npx --yes whichtool@0.1.0 tasks lint ./tools.json --tasks ./whichtool.tasks.yaml
+
+      - name: Inspect the surface
+        run: npx --yes whichtool@0.1.0 inspect ./tools.json --max-context-tokens 4000
+
+      - name: Put the surface report in the job summary
+        if: always()
+        run: npx --yes whichtool@0.1.0 inspect ./tools.json --format markdown >> "$GITHUB_STEP_SUMMARY"
+
+  # The measured run. Needs a provider key, so it is skipped on forks where secrets are
+  # unavailable rather than failing with an unhelpful error.
+  run:
+    runs-on: ubuntu-latest
+    needs: inspect
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+
+      # Opt in with the repository variable WHICHTOOL_ENABLE_CACHE=true. Trial caches may
+      # contain prompts, tool definitions, and provider responses, so the default is off.
+      - name: Restore the trial cache
+        if: vars.WHICHTOOL_ENABLE_CACHE == 'true'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .whichtool-cache
+          key: whichtool-v1-${{ github.ref }}-${{ runner.os }}-${{ hashFiles('tools.json', 'whichtool.tasks.yaml') }}
+
+      - name: Run against the pull request
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          WHICHTOOL_ENABLE_CACHE: ${{ vars.WHICHTOOL_ENABLE_CACHE }}
+        run: |
+          cache_args=(--no-cache)
+          if [[ "$WHICHTOOL_ENABLE_CACHE" == "true" ]]; then cache_args=(--cache); fi
+          npx --yes whichtool@0.1.0 run ./tools.json \
+            --tasks ./whichtool.tasks.yaml \
+            --provider openai --model gpt-4.1-mini \
+            --repeat 5 --temperature 0 --seed 0 \
+            "${cache_args[@]}" \
+            --min-accuracy 0.9 --max-over-trigger 0.05 \
+            --format json --out head-run.json
+
+      # The base branch's surface, measured the same way. Everything except the surface has
+      # to match or `diff` refuses to subtract them.
+      - name: Run against the base branch
+        if: github.event_name == 'pull_request'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          WHICHTOOL_ENABLE_CACHE: ${{ vars.WHICHTOOL_ENABLE_CACHE }}
+        run: |
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          git show "origin/${{ github.base_ref }}:tools.json" > base-tools.json
+          cache_args=(--no-cache)
+          if [[ "$WHICHTOOL_ENABLE_CACHE" == "true" ]]; then cache_args=(--cache); fi
+          npx --yes whichtool@0.1.0 run ./base-tools.json \
+            --tasks ./whichtool.tasks.yaml \
+            --provider openai --model gpt-4.1-mini \
+            --repeat 5 --temperature 0 --seed 0 \
+            "${cache_args[@]}" \
+            --format json --out base-run.json
+
+      - name: Write the delta to the job summary
+        if: github.event_name == 'pull_request'
+        run: |
+          # `diff` reports its verdict as an exit code (1 regression, 2 incomparable) and
+          # writes --out first. Under the default `bash -e` that would skip the summary in
+          # exactly the cases worth summarising, so capture it, publish, then re-raise.
+          status=0
+          npx --yes whichtool@0.1.0 diff base-run.json head-run.json \
+            --max-accuracy-drop 0.05 \
+            --format markdown --out delta.md || status=$?
+          cat delta.md >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+
+      # Kept even on failure: the HTML report is the artifact worth opening when the check
+      # goes red, because its confusion matrix links straight to the offending trials.
+      - name: Publish the reports
+        if: always()
+        run: |
+          # `report` re-raises the saved run's own verdict, so on a red run the first line
+          # would stop the step and the badge would go missing precisely when it matters.
+          # These are artifacts, not the gate: the gate already ran, above.
+          npx --yes whichtool@0.1.0 report head-run.json --format html --out whichtool-report.html || true
+          npx --yes whichtool@0.1.0 report head-run.json --format badge --out whichtool-badge.json || true
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: whichtool-report
+          path: |
+            whichtool-report.html
+            whichtool-badge.json
+            head-run.json

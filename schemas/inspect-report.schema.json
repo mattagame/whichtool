@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mattagame/whichtool/main/schemas/inspect-report.schema.json",
+  "title": "whichtool inspect report",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "const": "whichtool.inspect/1" },
+    "target": { "$ref": "common.schema.json#/$defs/surfaceSource" },
+    "surface": {
+      "type": "object",
+      "properties": {
+        "hash": { "type": "string" },
+        "toolCount": { "type": "integer", "minimum": 0 },
+        "tools": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/toolSummary" }
+        }
+      },
+      "required": ["hash", "toolCount", "tools"],
+      "additionalProperties": false
+    },
+    "tokens": { "$ref": "common.schema.json#/$defs/surfaceTokens" },
+    "annotations": {
+      "type": "object",
+      "properties": {
+        "coverage": { "$ref": "#/$defs/annotationCoverage" },
+        "caveat": { "type": "string" }
+      },
+      "required": ["coverage", "caveat"],
+      "additionalProperties": false
+    },
+    "overlap": {
+      "type": "object",
+      "properties": {
+        "method": { "type": "string" },
+        "pairsConsidered": { "type": "integer", "minimum": 0 },
+        "pairsReported": { "type": "integer", "minimum": 0 },
+        "pairs": { "type": "array", "items": { "$ref": "#/$defs/overlapPair" } }
+      },
+      "required": ["method", "pairsConsidered", "pairsReported", "pairs"],
+      "additionalProperties": false
+    },
+    "deprecations": { "$ref": "#/$defs/deprecationAnalysis" },
+    "headerParams": {
+      "type": "object",
+      "properties": {
+        "rejectedTools": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["rejectedTools"],
+      "additionalProperties": false
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+    },
+    "thresholds": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/thresholdCheck" }
+    },
+    "analysisOk": { "type": "boolean" },
+    "thresholdsOk": { "type": "boolean" },
+    "ok": { "type": "boolean" }
+  },
+  "required": [
+    "schemaVersion",
+    "target",
+    "surface",
+    "tokens",
+    "annotations",
+    "overlap",
+    "deprecations",
+    "headerParams",
+    "diagnostics",
+    "thresholds",
+    "analysisOk",
+    "thresholdsOk",
+    "ok"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "toolAnnotations": {
+      "type": "object",
+      "description": "Canonical JSON as served. Known hints may retain invalid values so diagnostics can explain them.",
+      "properties": {
+        "title": {},
+        "readOnlyHint": {},
+        "destructiveHint": {},
+        "idempotentHint": {},
+        "openWorldHint": {}
+      },
+      "additionalProperties": true
+    },
+    "toolSummary": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "hasDescription": { "type": "boolean" },
+        "descriptionLength": { "type": "integer", "minimum": 0 },
+        "semantics": { "enum": ["read", "mutate", "destructive", "unknown"] },
+        "parameterCount": { "type": "integer", "minimum": 0 },
+        "requiredParameterCount": { "type": "integer", "minimum": 0 },
+        "annotations": { "$ref": "#/$defs/toolAnnotations" },
+        "tokens": { "$ref": "common.schema.json#/$defs/toolTokenBreakdown" },
+        "tokenShare": { "type": "number", "minimum": 0, "maximum": 1 },
+        "servedIndex": { "type": "integer", "minimum": 0 }
+      },
+      "required": [
+        "name",
+        "hasDescription",
+        "descriptionLength",
+        "semantics",
+        "parameterCount",
+        "requiredParameterCount",
+        "tokens",
+        "tokenShare",
+        "servedIndex"
+      ],
+      "additionalProperties": false
+    },
+    "annotationCoverage": {
+      "type": "object",
+      "properties": {
+        "toolCount": { "type": "integer", "minimum": 0 },
+        "annotated": { "type": "integer", "minimum": 0 },
+        "byHint": {
+          "type": "object",
+          "properties": {
+            "readOnlyHint": { "type": "integer", "minimum": 0 },
+            "destructiveHint": { "type": "integer", "minimum": 0 },
+            "idempotentHint": { "type": "integer", "minimum": 0 },
+            "openWorldHint": { "type": "integer", "minimum": 0 }
+          },
+          "required": ["readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["toolCount", "annotated", "byHint"],
+      "additionalProperties": false
+    },
+    "overlapPair": {
+      "type": "object",
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "nameScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "descriptionScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "identicalDescription": { "type": "boolean" },
+        "distinctiveSharedTerms": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": [
+        "tools",
+        "score",
+        "nameScore",
+        "descriptionScore",
+        "identicalDescription",
+        "distinctiveSharedTerms"
+      ],
+      "additionalProperties": false
+    },
+    "deprecationAnalysis": {
+      "type": "object",
+      "properties": {
+        "checked": { "type": "boolean" },
+        "specRevision": { "type": ["string", "null"] },
+        "verifiedOn": { "type": ["string", "null"] },
+        "ruleCount": { "type": "integer", "minimum": 0 },
+        "registrySize": { "type": "integer", "minimum": 0 },
+        "note": { "type": "string" },
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+        }
+      },
+      "required": [
+        "checked",
+        "specRevision",
+        "verifiedOn",
+        "ruleCount",
+        "registrySize",
+        "note",
+        "diagnostics"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

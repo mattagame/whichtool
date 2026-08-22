@@ -1,0 +1,204 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "refs-and-defs.json"
+  },
+  "surface": {
+    "hash": "sha256:2928fb3e2a906272e9ffe128f464238877aa5fe61bb46de3fcc52688da6e1034",
+    "toolCount": 3,
+    "tools": [
+      {
+        "name": "create_order",
+        "hasDescription": true,
+        "descriptionLength": 71,
+        "semantics": "mutate",
+        "parameterCount": 2,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 238,
+          "name": 7,
+          "description": 23,
+          "schema": 195,
+          "envelope": 13
+        },
+        "tokenShare": 0.5288888888888889,
+        "servedIndex": 0,
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "get_category_tree",
+        "hasDescription": true,
+        "descriptionLength": 70,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 0,
+        "tokens": {
+          "total": 126,
+          "name": 8,
+          "description": 23,
+          "schema": 82,
+          "envelope": 13
+        },
+        "tokenShare": 0.28,
+        "servedIndex": 1,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "validate_address",
+        "hasDescription": true,
+        "descriptionLength": 64,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 86,
+          "name": 7,
+          "description": 19,
+          "schema": 47,
+          "envelope": 13
+        },
+        "tokenShare": 0.19111111111111112,
+        "servedIndex": 2,
+        "annotations": {
+          "openWorldHint": true,
+          "readOnlyHint": true
+        }
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 450,
+    "byTool": {
+      "create_order": {
+        "total": 238,
+        "name": 7,
+        "description": 23,
+        "schema": 195,
+        "envelope": 13
+      },
+      "get_category_tree": {
+        "total": 126,
+        "name": 8,
+        "description": 23,
+        "schema": 82,
+        "envelope": 13
+      },
+      "validate_address": {
+        "total": 86,
+        "name": 7,
+        "description": 19,
+        "schema": 47,
+        "envelope": 13
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 3,
+      "annotated": 3,
+      "byHint": {
+        "readOnlyHint": 3,
+        "destructiveHint": 1,
+        "idempotentHint": 1,
+        "openWorldHint": 1
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 3,
+    "pairsReported": 3,
+    "pairs": [
+      {
+        "tools": [
+          "create_order",
+          "get_category_tree"
+        ],
+        "score": 0.26436781609195403,
+        "nameScore": 0.06451612903225806,
+        "descriptionScore": 0.3076923076923077,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "catalogue"
+        ]
+      },
+      {
+        "tools": [
+          "create_order",
+          "validate_address"
+        ],
+        "score": 0.11976047904191617,
+        "nameScore": 0.13333333333333333,
+        "descriptionScore": 0.10218978102189781,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "get_category_tree",
+          "validate_address"
+        ],
+        "score": 0.08187134502923976,
+        "nameScore": 0.05714285714285714,
+        "descriptionScore": 0.08823529411764706,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": []
+  },
+  "diagnostics": [
+    {
+      "code": "surface/unresolved-ref-cycle",
+      "severity": "info",
+      "message": "Tool `get_category_tree`: `inputSchema` keeps an unresolved `$ref` (#/$defs/node, cycle).",
+      "tool": "get_category_tree",
+      "detail": {
+        "field": "inputSchema",
+        "ref": "#/$defs/node",
+        "reason": "cycle"
+      }
+    },
+    {
+      "code": "surface/unresolved-ref-external",
+      "severity": "info",
+      "message": "Tool `validate_address`: `inputSchema` keeps an unresolved `$ref` (https://schemas.example.com/address.json, external).",
+      "tool": "validate_address",
+      "detail": {
+        "field": "inputSchema",
+        "ref": "https://schemas.example.com/address.json",
+        "reason": "external"
+      }
+    }
+  ],
+  "thresholds": [],
+  "analysisOk": true,
+  "thresholdsOk": true,
+  "ok": true
+}

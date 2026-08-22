@@ -1,0 +1,30 @@
+{
+  "tools": [
+    {
+      "name": "send_email",
+      "description": "Interact with the messaging subsystem.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "to": { "type": "string" }, "body": { "type": "string" } },
+        "required": ["to", "body"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false }
+    },
+    {
+      "name": "send_sms",
+      "description": "Interact with the messaging subsystem.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "number": { "type": "string" }, "text": { "type": "string" } },
+        "required": ["number", "text"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false }
+    },
+    {
+      "name": "list_messages",
+      "description": "Interact with the messaging subsystem.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "annotations": { "readOnlyHint": true }
+    }
+  ]
+}

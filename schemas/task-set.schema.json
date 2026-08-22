@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mattagame/whichtool/main/schemas/task-set.schema.json",
+  "title": "whichtool task set",
+  "description": "The data model accepted from either JSON or whichtool's supported YAML subset.",
+  "type": "object",
+  "properties": {
+    "version": { "const": 1 },
+    "surface": { "type": ["string", "null"] },
+    "tasks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/task" }
+    }
+  },
+  "required": ["version", "tasks"],
+  "additionalProperties": false,
+  "$defs": {
+    "nonEmptyString": { "type": "string", "pattern": "\\S" },
+    "task": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "prompt": { "$ref": "#/$defs/nonEmptyString" },
+        "expected": {
+          "oneOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+        },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "derivedFrom": {
+          "type": "object",
+          "properties": {
+            "taskId": { "type": "string" },
+            "mutation": { "type": "string" }
+          },
+          "required": ["taskId", "mutation"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["id", "prompt", "expected"],
+      "additionalProperties": false
+    }
+  }
+}

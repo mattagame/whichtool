@@ -1,0 +1,39 @@
+whichtool inspect
+  target   snapshot  clean.json
+  surface  bab8b902ed2e  4 tools  ~653 tokens (estimate, heuristic-bpe-v1)
+
+Worst first
+  No errors or warnings.
+
+Context cost  ~653 tokens total, mcp-neutral-compact
+  tool                       tokens  share  desc  schema
+  schedule_dunning_reminder    ~182    28%   ~48    ~111
+  issue_refund                 ~178    27%   ~43    ~115
+  list_overdue_invoices        ~151    23%   ~48     ~81
+  get_invoice                  ~142    22%   ~50     ~73
+  Structural estimate, not a real vocabulary, and not provider-specific. Measured
+  against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what
+  Anthropic counted: the providers disagree with each other by more than this estimate
+  disagrees with either. Use it to compare tools against each other and to spot bloat;
+  for a bill, read the number your provider reports.
+
+Annotations  4/4 tools annotated
+  readOnlyHint 4/4   destructiveHint 4/4   idempotentHint 4/4   openWorldHint 4/4
+  Annotations are hints, not guarantees: the MCP spec is explicit that a client must not
+  rely on them as a security boundary. whichtool checks their internal consistency, not
+  their truthfulness; only running the tool could establish that, and whichtool never
+  does.
+
+Lexical overlap  6 pairs scored
+  No pair scores at or above 0.40. Highest: 0.22 (get_invoice <-> issue_refund).
+
+Deprecated features
+  Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated
+  features is visible in a tools/list response or a tool definition. They are all
+  client-, authorization- or transport-level, so there is nothing on a surface to flag.
+  The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.
+
+Findings  0 errors, 0 warnings, 0 info
+  None.
+
+No tool was executed. whichtool read tools/list and stopped there.

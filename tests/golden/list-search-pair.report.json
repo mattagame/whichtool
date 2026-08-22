@@ -1,0 +1,307 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "list-search-pair.json"
+  },
+  "surface": {
+    "hash": "sha256:5eabb107f25f120b6cb590cbe6ec52215375225fda7636f95807d68297741142",
+    "toolCount": 4,
+    "tools": [
+      {
+        "name": "count_users",
+        "hasDescription": true,
+        "descriptionLength": 56,
+        "semantics": "read",
+        "parameterCount": 0,
+        "requiredParameterCount": 0,
+        "tokens": {
+          "total": 59,
+          "name": 7,
+          "description": 17,
+          "schema": 22,
+          "envelope": 13
+        },
+        "tokenShare": 0.13140311804008908,
+        "servedIndex": 3,
+        "annotations": {
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_user",
+        "hasDescription": true,
+        "descriptionLength": 44,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 86,
+          "name": 5,
+          "description": 15,
+          "schema": 53,
+          "envelope": 13
+        },
+        "tokenShare": 0.1915367483296214,
+        "servedIndex": 2,
+        "annotations": {
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "list_users",
+        "hasDescription": true,
+        "descriptionLength": 78,
+        "semantics": "read",
+        "parameterCount": 3,
+        "requiredParameterCount": 0,
+        "tokens": {
+          "total": 146,
+          "name": 6,
+          "description": 24,
+          "schema": 103,
+          "envelope": 13
+        },
+        "tokenShare": 0.32516703786191536,
+        "servedIndex": 0,
+        "annotations": {
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "search_users",
+        "hasDescription": true,
+        "descriptionLength": 78,
+        "semantics": "read",
+        "parameterCount": 3,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 158,
+          "name": 7,
+          "description": 24,
+          "schema": 114,
+          "envelope": 13
+        },
+        "tokenShare": 0.3518930957683742,
+        "servedIndex": 1,
+        "annotations": {
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 449,
+    "byTool": {
+      "count_users": {
+        "total": 59,
+        "name": 7,
+        "description": 17,
+        "schema": 22,
+        "envelope": 13
+      },
+      "get_user": {
+        "total": 86,
+        "name": 5,
+        "description": 15,
+        "schema": 53,
+        "envelope": 13
+      },
+      "list_users": {
+        "total": 146,
+        "name": 6,
+        "description": 24,
+        "schema": 103,
+        "envelope": 13
+      },
+      "search_users": {
+        "total": 158,
+        "name": 7,
+        "description": 24,
+        "schema": 114,
+        "envelope": 13
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 4,
+      "annotated": 4,
+      "byHint": {
+        "readOnlyHint": 4,
+        "destructiveHint": 0,
+        "idempotentHint": 0,
+        "openWorldHint": 4
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 6,
+    "pairsReported": 6,
+    "pairs": [
+      {
+        "tools": [
+          "list_users",
+          "search_users"
+        ],
+        "score": 0.9230769230769231,
+        "nameScore": 0.4166666666666667,
+        "descriptionScore": 1,
+        "identicalDescription": true,
+        "distinctiveSharedTerms": [
+          "filtering",
+          "pagination",
+          "supports",
+          "directory",
+          "users",
+          "workspace"
+        ]
+      },
+      {
+        "tools": [
+          "count_users",
+          "list_users"
+        ],
+        "score": 0.5157232704402516,
+        "nameScore": 0.5217391304347826,
+        "descriptionScore": 0.5147058823529411,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "directory",
+          "users",
+          "workspace"
+        ]
+      },
+      {
+        "tools": [
+          "count_users",
+          "search_users"
+        ],
+        "score": 0.4968944099378882,
+        "nameScore": 0.4,
+        "descriptionScore": 0.5147058823529411,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "directory",
+          "users",
+          "workspace"
+        ]
+      },
+      {
+        "tools": [
+          "count_users",
+          "get_user"
+        ],
+        "score": 0.4065040650406504,
+        "nameScore": 0.38095238095238093,
+        "descriptionScore": 0.43137254901960786,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "workspace"
+        ]
+      },
+      {
+        "tools": [
+          "get_user",
+          "list_users"
+        ],
+        "score": 0.3611111111111111,
+        "nameScore": 0.4,
+        "descriptionScore": 0.3709677419354839,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "workspace"
+        ]
+      },
+      {
+        "tools": [
+          "get_user",
+          "search_users"
+        ],
+        "score": 0.3424657534246575,
+        "nameScore": 0.2727272727272727,
+        "descriptionScore": 0.3709677419354839,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "workspace"
+        ]
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": []
+  },
+  "diagnostics": [
+    {
+      "code": "descriptions/identical",
+      "severity": "error",
+      "message": "`list_users` and `search_users` have byte-identical descriptions. Nothing in the text tells the model which one to pick.",
+      "tools": [
+        "list_users",
+        "search_users"
+      ]
+    },
+    {
+      "code": "overlap/notable",
+      "severity": "info",
+      "message": "`count_users` and `get_user` overlap at 0.41.",
+      "tools": [
+        "count_users",
+        "get_user"
+      ],
+      "detail": {
+        "score": 0.4065
+      }
+    },
+    {
+      "code": "overlap/notable",
+      "severity": "info",
+      "message": "`count_users` and `list_users` overlap at 0.52.",
+      "tools": [
+        "count_users",
+        "list_users"
+      ],
+      "detail": {
+        "score": 0.5157
+      }
+    },
+    {
+      "code": "overlap/notable",
+      "severity": "info",
+      "message": "`count_users` and `search_users` overlap at 0.50.",
+      "tools": [
+        "count_users",
+        "search_users"
+      ],
+      "detail": {
+        "score": 0.4969
+      }
+    }
+  ],
+  "thresholds": [],
+  "analysisOk": false,
+  "thresholdsOk": true,
+  "ok": false
+}

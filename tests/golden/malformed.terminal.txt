@@ -1,0 +1,66 @@
+whichtool inspect
+  target   snapshot  malformed.json
+  surface  6fc071a35f22  3 tools  ~103 tokens (estimate, heuristic-bpe-v1)
+
+Worst first
+  1. error  surface/duplicate-tool-name  list_items
+            Duplicate tool name `list_items` at index 1; the entry at index 0 is the one
+            kept.
+  2. error  surface/malformed-tool  (surface)
+            Tool at index 5 is not an object and was skipped.
+  3. error  surface/missing-tool-name  (surface)
+            Tool at index 2 has no usable `name` and was skipped.
+  5 more errors and warnings below.
+
+Context cost  ~103 tokens total, mcp-neutral-compact
+  tool           tokens  share  desc  schema
+  list_items        ~44    43%   ~12     ~13
+  describe_item     ~37    36%    ~0     ~23  no description
+  count_items       ~22    21%    ~0      ~7  no description
+  Structural estimate, not a real vocabulary, and not provider-specific. Measured
+  against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what
+  Anthropic counted: the providers disagree with each other by more than this estimate
+  disagrees with either. Use it to compare tools against each other and to spot bloat;
+  for a bill, read the number your provider reports.
+
+Annotations  0/3 tools annotated
+  readOnlyHint 0/3   destructiveHint 0/3   idempotentHint 0/3   openWorldHint 0/3
+  Annotations are hints, not guarantees: the MCP spec is explicit that a client must not
+  rely on them as a security boundary. whichtool checks their internal consistency, not
+  their truthfulness; only running the tool could establish that, and whichtool never
+  does.
+
+Lexical overlap  3 pairs scored
+  No pair scores at or above 0.40. Highest: 0.25 (count_items <-> list_items).
+
+Deprecated features
+  Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated
+  features is visible in a tools/list response or a tool definition. They are all
+  client-, authorization- or transport-level, so there is nothing on a surface to flag.
+  The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.
+
+Findings  3 errors, 5 warnings, 0 info
+  error  surface/duplicate-tool-name  list_items
+         Duplicate tool name `list_items` at index 1; the entry at index 0 is the one
+         kept.
+  error  surface/malformed-tool  (surface)
+         Tool at index 5 is not an object and was skipped.
+  error  surface/missing-tool-name  (surface)
+         Tool at index 2 has no usable `name` and was skipped.
+  warn   annotations/absent-surface-wide  count_items, describe_item, list_items
+         No tool on this surface declares any annotation. Clients therefore assume the
+         documented defaults for every one of them (not read-only, potentially
+         destructive, not idempotent, open-world), which changes the confirmation UX for
+         all 3 tools without the maintainer choosing it.
+  warn   descriptions/missing  count_items
+         Tool `count_items` has no description. The model has only the name and the
+         schema to go on.
+  warn   descriptions/missing  describe_item
+         Tool `describe_item` has no description. The model has only the name and the
+         schema to go on.
+  warn   surface/missing-input-schema  count_items
+         Tool `count_items` has no `inputSchema`; an empty object schema was assumed.
+  warn   surface/non-string-description  describe_item
+         Tool `describe_item` has a non-string `description`; treated as absent.
+
+No tool was executed. whichtool read tools/list and stopped there.

@@ -1,0 +1,586 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "./examples/ambiguous-server/tools.json"
+  },
+  "surface": {
+    "hash": "sha256:5086ee475f2051df8aa4e04898e47b45c93c02c22fd2a25efccb07c8682871a2",
+    "toolCount": 8,
+    "tools": [
+      {
+        "name": "close_issue",
+        "hasDescription": true,
+        "descriptionLength": 67,
+        "semantics": "mutate",
+        "parameterCount": 2,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 84,
+          "name": 7,
+          "description": 20,
+          "schema": 44,
+          "envelope": 13
+        },
+        "tokenShare": 0.12727272727272726,
+        "servedIndex": 4,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "deleteIssue",
+        "hasDescription": true,
+        "descriptionLength": 69,
+        "semantics": "destructive",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 71,
+          "name": 5,
+          "description": 21,
+          "schema": 32,
+          "envelope": 13
+        },
+        "tokenShare": 0.10757575757575757,
+        "servedIndex": 5,
+        "annotations": {
+          "destructiveHint": false
+        }
+      },
+      {
+        "name": "fetch_issue_details",
+        "hasDescription": true,
+        "descriptionLength": 49,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 69,
+          "name": 10,
+          "description": 16,
+          "schema": 30,
+          "envelope": 13
+        },
+        "tokenShare": 0.10454545454545454,
+        "servedIndex": 3,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_issue",
+        "hasDescription": true,
+        "descriptionLength": 38,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 64,
+          "name": 6,
+          "description": 13,
+          "schema": 32,
+          "envelope": 13
+        },
+        "tokenShare": 0.09696969696969697,
+        "servedIndex": 2,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "issues.comment.add",
+        "hasDescription": true,
+        "descriptionLength": 26,
+        "semantics": "mutate",
+        "parameterCount": 2,
+        "requiredParameterCount": 2,
+        "tokens": {
+          "total": 77,
+          "name": 9,
+          "description": 10,
+          "schema": 45,
+          "envelope": 13
+        },
+        "tokenShare": 0.11666666666666667,
+        "servedIndex": 6
+      },
+      {
+        "name": "list_issues",
+        "hasDescription": true,
+        "descriptionLength": 84,
+        "semantics": "read",
+        "parameterCount": 4,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 130,
+          "name": 6,
+          "description": 25,
+          "schema": 86,
+          "envelope": 13
+        },
+        "tokenShare": 0.19696969696969696,
+        "servedIndex": 0,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "search_issues",
+        "hasDescription": true,
+        "descriptionLength": 84,
+        "semantics": "read",
+        "parameterCount": 3,
+        "requiredParameterCount": 2,
+        "tokens": {
+          "total": 103,
+          "name": 7,
+          "description": 25,
+          "schema": 58,
+          "envelope": 13
+        },
+        "tokenShare": 0.15606060606060607,
+        "servedIndex": 1,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "update_issue",
+        "hasDescription": false,
+        "descriptionLength": 0,
+        "semantics": "mutate",
+        "parameterCount": 2,
+        "requiredParameterCount": 2,
+        "tokens": {
+          "total": 62,
+          "name": 7,
+          "description": 0,
+          "schema": 47,
+          "envelope": 8
+        },
+        "tokenShare": 0.09393939393939393,
+        "servedIndex": 7
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 660,
+    "byTool": {
+      "close_issue": {
+        "total": 84,
+        "name": 7,
+        "description": 20,
+        "schema": 44,
+        "envelope": 13
+      },
+      "deleteIssue": {
+        "total": 71,
+        "name": 5,
+        "description": 21,
+        "schema": 32,
+        "envelope": 13
+      },
+      "fetch_issue_details": {
+        "total": 69,
+        "name": 10,
+        "description": 16,
+        "schema": 30,
+        "envelope": 13
+      },
+      "get_issue": {
+        "total": 64,
+        "name": 6,
+        "description": 13,
+        "schema": 32,
+        "envelope": 13
+      },
+      "issues.comment.add": {
+        "total": 77,
+        "name": 9,
+        "description": 10,
+        "schema": 45,
+        "envelope": 13
+      },
+      "list_issues": {
+        "total": 130,
+        "name": 6,
+        "description": 25,
+        "schema": 86,
+        "envelope": 13
+      },
+      "search_issues": {
+        "total": 103,
+        "name": 7,
+        "description": 25,
+        "schema": 58,
+        "envelope": 13
+      },
+      "update_issue": {
+        "total": 62,
+        "name": 7,
+        "description": 0,
+        "schema": 47,
+        "envelope": 8
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 8,
+      "annotated": 6,
+      "byHint": {
+        "readOnlyHint": 5,
+        "destructiveHint": 1,
+        "idempotentHint": 0,
+        "openWorldHint": 0
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 28,
+    "pairsReported": 20,
+    "pairs": [
+      {
+        "tools": [
+          "list_issues",
+          "search_issues"
+        ],
+        "score": 0.9285714285714286,
+        "nameScore": 0.46153846153846156,
+        "descriptionScore": 1,
+        "identicalDescription": true,
+        "distinctiveSharedTerms": [
+          "filtering",
+          "pagination",
+          "project",
+          "sorting",
+          "supports",
+          "tracker"
+        ]
+      },
+      {
+        "tools": [
+          "fetch_issue_details",
+          "get_issue"
+        ],
+        "score": 0.5882352941176471,
+        "nameScore": 0.3333333333333333,
+        "descriptionScore": 0.6741573033707865,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "key",
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "deleteIssue",
+          "issues.comment.add"
+        ],
+        "score": 0.32558139534883723,
+        "nameScore": 0.25,
+        "descriptionScore": 0.28865979381443296,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "close_issue",
+          "deleteIssue"
+        ],
+        "score": 0.31901840490797545,
+        "nameScore": 0.48,
+        "descriptionScore": 0.2753623188405797,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "deleteIssue",
+          "fetch_issue_details"
+        ],
+        "score": 0.3137254901960784,
+        "nameScore": 0.36363636363636365,
+        "descriptionScore": 0.26666666666666666,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "deleteIssue",
+          "get_issue"
+        ],
+        "score": 0.2878787878787879,
+        "nameScore": 0.43478260869565216,
+        "descriptionScore": 0.25688073394495414,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "close_issue",
+          "fetch_issue_details"
+        ],
+        "score": 0.28,
+        "nameScore": 0.3125,
+        "descriptionScore": 0.2711864406779661,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "fetch_issue_details",
+          "search_issues"
+        ],
+        "score": 0.27218934911242604,
+        "nameScore": 0.35294117647058826,
+        "descriptionScore": 0.23703703703703705,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "close_issue",
+          "get_issue"
+        ],
+        "score": 0.26356589147286824,
+        "nameScore": 0.45454545454545453,
+        "descriptionScore": 0.22429906542056074,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "get_issue",
+          "issues.comment.add"
+        ],
+        "score": 0.25263157894736843,
+        "nameScore": 0.27586206896551724,
+        "descriptionScore": 0.21212121212121213,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "fetch_issue_details",
+          "list_issues"
+        ],
+        "score": 0.25149700598802394,
+        "nameScore": 0.25,
+        "descriptionScore": 0.23703703703703705,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "get_issue",
+          "list_issues"
+        ],
+        "score": 0.2465753424657534,
+        "nameScore": 0.45454545454545453,
+        "descriptionScore": 0.20967741935483872,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "get_issue",
+          "search_issues"
+        ],
+        "score": 0.22972972972972974,
+        "nameScore": 0.3333333333333333,
+        "descriptionScore": 0.20967741935483872,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "close_issue",
+          "issues.comment.add"
+        ],
+        "score": 0.20634920634920634,
+        "nameScore": 0.25806451612903225,
+        "descriptionScore": 0.18947368421052632,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "close_issue",
+          "list_issues"
+        ],
+        "score": 0.2033898305084746,
+        "nameScore": 0.3333333333333333,
+        "descriptionScore": 0.1830065359477124,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "close_issue",
+          "search_issues"
+        ],
+        "score": 0.2011173184357542,
+        "nameScore": 0.3076923076923077,
+        "descriptionScore": 0.1830065359477124,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "fetch_issue_details",
+          "issues.comment.add"
+        ],
+        "score": 0.1896551724137931,
+        "nameScore": 0.20512820512820512,
+        "descriptionScore": 0.18181818181818182,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "close_issue",
+          "update_issue"
+        ],
+        "score": 0.17204301075268819,
+        "nameScore": 0.48,
+        "descriptionScore": 0,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issue"
+        ]
+      },
+      {
+        "tools": [
+          "issues.comment.add",
+          "list_issues"
+        ],
+        "score": 0.16783216783216784,
+        "nameScore": 0.3870967741935484,
+        "descriptionScore": 0.10714285714285714,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issues"
+        ]
+      },
+      {
+        "tools": [
+          "issues.comment.add",
+          "search_issues"
+        ],
+        "score": 0.16551724137931034,
+        "nameScore": 0.36363636363636365,
+        "descriptionScore": 0.10714285714285714,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "issues"
+        ]
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": []
+  },
+  "diagnostics": [
+    {
+      "code": "descriptions/identical",
+      "severity": "error",
+      "message": "`list_issues` and `search_issues` have byte-identical descriptions. Nothing in the text tells the model which one to pick.",
+      "tools": [
+        "list_issues",
+        "search_issues"
+      ]
+    },
+    {
+      "code": "annotations/destructive-name-declared-safe",
+      "severity": "warning",
+      "message": "Tool `deleteIssue` leads with `delete` but declares `destructiveHint: false`, which tells clients to skip the confirmation step.",
+      "tool": "deleteIssue",
+      "detail": {
+        "verb": "delete"
+      }
+    },
+    {
+      "code": "annotations/partial-coverage",
+      "severity": "warning",
+      "message": "6 of 8 tools declare annotations. The rest silently fall back to the defaults, so the surface is inconsistent about what a client should confirm.",
+      "tools": [
+        "issues.comment.add",
+        "update_issue"
+      ],
+      "detail": {
+        "annotated": 6,
+        "total": 8
+      }
+    },
+    {
+      "code": "annotations/read-only-with-mutating-name",
+      "severity": "warning",
+      "message": "Tool `close_issue` declares `readOnlyHint: true` but its name leads with `close`, which reads as a write. Either the hint or the name is misleading the model.",
+      "tool": "close_issue",
+      "detail": {
+        "verb": "close",
+        "semantics": "mutate"
+      }
+    },
+    {
+      "code": "descriptions/missing",
+      "severity": "warning",
+      "message": "Tool `update_issue` has no description. The model has only the name and the schema to go on.",
+      "tool": "update_issue"
+    },
+    {
+      "code": "overlap/notable",
+      "severity": "info",
+      "message": "`fetch_issue_details` and `get_issue` overlap at 0.59.",
+      "tools": [
+        "fetch_issue_details",
+        "get_issue"
+      ],
+      "detail": {
+        "score": 0.5882
+      }
+    }
+  ],
+  "thresholds": [],
+  "analysisOk": false,
+  "thresholdsOk": true,
+  "ok": false
+}

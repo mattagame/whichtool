@@ -1,0 +1,250 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "no-annotations.json"
+  },
+  "surface": {
+    "hash": "sha256:099b6acbb205927536d1dcb26337ee5c09bd59e634a8213fe36f986a589fc649",
+    "toolCount": 4,
+    "tools": [
+      {
+        "name": "create_branch",
+        "hasDescription": true,
+        "descriptionLength": 45,
+        "semantics": "mutate",
+        "parameterCount": 3,
+        "requiredParameterCount": 3,
+        "tokens": {
+          "total": 91,
+          "name": 7,
+          "description": 15,
+          "schema": 56,
+          "envelope": 13
+        },
+        "tokenShare": 0.2916666666666667,
+        "servedIndex": 1
+      },
+      {
+        "name": "delete_branch",
+        "hasDescription": true,
+        "descriptionLength": 88,
+        "semantics": "destructive",
+        "parameterCount": 2,
+        "requiredParameterCount": 2,
+        "tokens": {
+          "total": 90,
+          "name": 7,
+          "description": 27,
+          "schema": 43,
+          "envelope": 13
+        },
+        "tokenShare": 0.28846153846153844,
+        "servedIndex": 2
+      },
+      {
+        "name": "get_commit",
+        "hasDescription": true,
+        "descriptionLength": 60,
+        "semantics": "read",
+        "parameterCount": 2,
+        "requiredParameterCount": 2,
+        "tokens": {
+          "total": 81,
+          "name": 6,
+          "description": 19,
+          "schema": 43,
+          "envelope": 13
+        },
+        "tokenShare": 0.25961538461538464,
+        "servedIndex": 3
+      },
+      {
+        "name": "list_repositories",
+        "hasDescription": true,
+        "descriptionLength": 59,
+        "semantics": "read",
+        "parameterCount": 0,
+        "requiredParameterCount": 0,
+        "tokens": {
+          "total": 50,
+          "name": 7,
+          "description": 17,
+          "schema": 13,
+          "envelope": 13
+        },
+        "tokenShare": 0.16025641025641027,
+        "servedIndex": 0
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 312,
+    "byTool": {
+      "create_branch": {
+        "total": 91,
+        "name": 7,
+        "description": 15,
+        "schema": 56,
+        "envelope": 13
+      },
+      "delete_branch": {
+        "total": 90,
+        "name": 7,
+        "description": 27,
+        "schema": 43,
+        "envelope": 13
+      },
+      "get_commit": {
+        "total": 81,
+        "name": 6,
+        "description": 19,
+        "schema": 43,
+        "envelope": 13
+      },
+      "list_repositories": {
+        "total": 50,
+        "name": 7,
+        "description": 17,
+        "schema": 13,
+        "envelope": 13
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 4,
+      "annotated": 0,
+      "byHint": {
+        "readOnlyHint": 0,
+        "destructiveHint": 0,
+        "idempotentHint": 0,
+        "openWorldHint": 0
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 6,
+    "pairsReported": 6,
+    "pairs": [
+      {
+        "tools": [
+          "create_branch",
+          "delete_branch"
+        ],
+        "score": 0.3803680981595092,
+        "nameScore": 0.5714285714285714,
+        "descriptionScore": 0.34074074074074073,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "branch"
+        ]
+      },
+      {
+        "tools": [
+          "delete_branch",
+          "list_repositories"
+        ],
+        "score": 0.13259668508287292,
+        "nameScore": 0,
+        "descriptionScore": 0.1610738255033557,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "create_branch",
+          "list_repositories"
+        ],
+        "score": 0.11594202898550725,
+        "nameScore": 0,
+        "descriptionScore": 0.1509433962264151,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "delete_branch",
+          "get_commit"
+        ],
+        "score": 0.11428571428571428,
+        "nameScore": 0,
+        "descriptionScore": 0.13333333333333333,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "get_commit",
+          "list_repositories"
+        ],
+        "score": 0.10666666666666667,
+        "nameScore": 0,
+        "descriptionScore": 0.11570247933884298,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "list"
+        ]
+      },
+      {
+        "tools": [
+          "create_branch",
+          "get_commit"
+        ],
+        "score": 0.10606060606060606,
+        "nameScore": 0,
+        "descriptionScore": 0.1308411214953271,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "commit"
+        ]
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": []
+  },
+  "diagnostics": [
+    {
+      "code": "annotations/absent-surface-wide",
+      "severity": "warning",
+      "message": "No tool on this surface declares any annotation. Clients therefore assume the documented defaults for every one of them (not read-only, potentially destructive, not idempotent, open-world), which changes the confirmation UX for all 4 tools without the maintainer choosing it.",
+      "tools": [
+        "create_branch",
+        "delete_branch",
+        "get_commit",
+        "list_repositories"
+      ],
+      "detail": {
+        "defaults": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": true
+        }
+      }
+    }
+  ],
+  "thresholds": [],
+  "analysisOk": true,
+  "thresholdsOk": true,
+  "ok": true
+}

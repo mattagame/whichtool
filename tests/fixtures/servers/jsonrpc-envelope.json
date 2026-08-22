@@ -1,0 +1,28 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      {
+        "name": "get_weather",
+        "description": "Return the current observed weather for a place, from the national service.",
+        "inputSchema": {
+          "type": "object",
+          "properties": { "place": { "type": "string" } },
+          "required": ["place"]
+        },
+        "annotations": { "readOnlyHint": true, "openWorldHint": true }
+      },
+      {
+        "name": "get_forecast",
+        "description": "Return the hourly forecast for a place over the next seven days.",
+        "inputSchema": {
+          "type": "object",
+          "properties": { "place": { "type": "string" }, "hours": { "type": "integer" } },
+          "required": ["place"]
+        },
+        "annotations": { "readOnlyHint": true, "openWorldHint": true }
+      }
+    ]
+  }
+}

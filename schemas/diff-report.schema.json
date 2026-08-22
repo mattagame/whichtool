@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mattagame/whichtool/main/schemas/diff-report.schema.json",
+  "title": "whichtool diff report",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "const": "whichtool.diff/2" },
+    "base": { "$ref": "#/$defs/runIdentity" },
+    "head": { "$ref": "#/$defs/runIdentity" },
+    "comparable": { "type": "boolean" },
+    "incomparable": { "type": "array", "items": { "type": "string" } },
+    "accuracy": { "$ref": "#/$defs/rateDelta" },
+    "overTrigger": { "$ref": "#/$defs/rateDelta" },
+    "multiCall": { "$ref": "#/$defs/rateDelta" },
+    "contextTokens": {
+      "type": "object",
+      "properties": {
+        "before": { "type": "integer", "minimum": 0 },
+        "after": { "type": "integer", "minimum": 0 },
+        "delta": { "type": "integer" }
+      },
+      "required": ["before", "after", "delta"],
+      "additionalProperties": false
+    },
+    "byTool": { "type": "array", "items": { "$ref": "#/$defs/toolDelta" } },
+    "newConfusions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/confusionDelta" }
+    },
+    "resolvedConfusions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/confusionDelta" }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+    },
+    "ok": { "type": "boolean" }
+  },
+  "required": [
+    "schemaVersion",
+    "base",
+    "head",
+    "comparable",
+    "incomparable",
+    "accuracy",
+    "overTrigger",
+    "multiCall",
+    "contextTokens",
+    "byTool",
+    "newConfusions",
+    "resolvedConfusions",
+    "diagnostics",
+    "ok"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "runIdentity": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "provider": { "type": "string" },
+        "model": { "type": "string" },
+        "surfaceHash": { "type": "string" },
+        "repeat": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["source", "provider", "model", "surfaceHash", "repeat"],
+      "additionalProperties": false
+    },
+    "pairedComparison": {
+      "type": "object",
+      "properties": {
+        "matched": { "type": "integer", "minimum": 0 },
+        "improved": { "type": "integer", "minimum": 0 },
+        "regressed": { "type": "integer", "minimum": 0 },
+        "excluded": { "type": "integer", "minimum": 0 },
+        "pValue": { "type": "number", "minimum": 0, "maximum": 1 },
+        "distinguishable": { "type": "boolean" }
+      },
+      "required": ["matched", "improved", "regressed", "excluded", "pValue", "distinguishable"],
+      "additionalProperties": false
+    },
+    "rateDelta": {
+      "type": "object",
+      "properties": {
+        "before": { "$ref": "common.schema.json#/$defs/proportion" },
+        "after": { "$ref": "common.schema.json#/$defs/proportion" },
+        "delta": { "type": ["number", "null"] },
+        "distinguishable": { "type": "boolean" },
+        "paired": { "$ref": "#/$defs/pairedComparison" }
+      },
+      "required": ["before", "after", "delta", "distinguishable", "paired"],
+      "additionalProperties": false
+    },
+    "nullableProportion": {
+      "oneOf": [{ "$ref": "common.schema.json#/$defs/proportion" }, { "type": "null" }]
+    },
+    "toolDelta": {
+      "type": "object",
+      "properties": {
+        "tool": { "type": "string" },
+        "before": { "$ref": "#/$defs/nullableProportion" },
+        "after": { "$ref": "#/$defs/nullableProportion" },
+        "delta": { "type": ["number", "null"] },
+        "distinguishable": { "type": "boolean" },
+        "paired": { "$ref": "#/$defs/pairedComparison" }
+      },
+      "required": ["tool", "before", "after", "delta", "distinguishable", "paired"],
+      "additionalProperties": false
+    },
+    "confusionDelta": {
+      "type": "object",
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "swaps": { "type": "integer", "minimum": 0 },
+        "denominator": { "type": "integer", "minimum": 0 },
+        "introduced": { "type": "integer", "minimum": 0 },
+        "resolved": { "type": "integer", "minimum": 0 },
+        "pValue": { "type": "number", "minimum": 0, "maximum": 1 },
+        "distinguishable": { "type": "boolean" }
+      },
+      "required": [
+        "tools",
+        "swaps",
+        "denominator",
+        "introduced",
+        "resolved",
+        "pValue",
+        "distinguishable"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

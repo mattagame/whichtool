@@ -1,0 +1,64 @@
+{
+  "tools": [
+    {
+      "name": "create_order",
+      "description": "Place an order for one or more catalogue items and return the order id.",
+      "inputSchema": {
+        "type": "object",
+        "$defs": {
+          "money": {
+            "type": "object",
+            "properties": {
+              "amount": { "type": "number" },
+              "currency": { "type": "string", "enum": ["EUR", "USD", "GBP"] }
+            },
+            "required": ["amount", "currency"]
+          },
+          "lineItem": {
+            "type": "object",
+            "properties": {
+              "sku": { "type": "string" },
+              "quantity": { "type": "integer" },
+              "unitPrice": { "$ref": "#/$defs/money" }
+            },
+            "required": ["sku", "quantity"]
+          }
+        },
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/$defs/lineItem" } },
+          "total": { "$ref": "#/$defs/money" }
+        },
+        "required": ["items"]
+      },
+      "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false }
+    },
+    {
+      "name": "get_category_tree",
+      "description": "Return the catalogue category tree, which nests to an arbitrary depth.",
+      "inputSchema": {
+        "type": "object",
+        "$defs": {
+          "node": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+            }
+          }
+        },
+        "properties": { "root": { "$ref": "#/$defs/node" } }
+      },
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "validate_address",
+      "description": "Check a shipping address against the carrier's address database.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "address": { "$ref": "https://schemas.example.com/address.json" } },
+        "required": ["address"]
+      },
+      "annotations": { "readOnlyHint": true, "openWorldHint": true }
+    }
+  ]
+}

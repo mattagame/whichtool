@@ -1,0 +1,44 @@
+{
+  "tools": [
+    {
+      "name": "purge_audit_log",
+      "description": "Permanently remove audit log entries older than the retention window.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "olderThanDays": { "type": "integer" } },
+        "required": ["olderThanDays"]
+      },
+      "annotations": { "readOnlyHint": true, "destructiveHint": true }
+    },
+    {
+      "name": "delete_workspace",
+      "description": "Delete a workspace along with every project and file it contains.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "workspaceId": { "type": "string" } },
+        "required": ["workspaceId"]
+      },
+      "annotations": { "destructiveHint": false, "idempotentHint": true }
+    },
+    {
+      "name": "update_settings",
+      "description": "Apply a partial update to the workspace settings document.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "patch": { "type": "object" } },
+        "required": ["patch"]
+      },
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "list_projects",
+      "description": "Return the projects in a workspace with their ids and names.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "workspaceId": { "type": "string" } },
+        "required": ["workspaceId"]
+      },
+      "annotations": { "readOnlyHint": false, "cachingHint": "aggressive" }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+whichtool run
+  target    snapshot  ./tests/fixtures/servers/list-search-pair.json
+  surface   5eabb107f25f  ~449 tokens (estimate)
+  provider  ollama  qwen3:4b  http://127.0.0.1:11434/v1/chat/completions
+  trials    20 = 10 tasks x 2 repeats, permuted, temperature 0, seed 0, 2527s
+
+Worst first
+  1. warn   run/thin-measurement  count_users, get_user, list_users
+            4 tools rest on fewer than 5 trials, so their accuracy carries an interval
+            too wide to act on. Add tasks or raise --repeat before drawing a conclusion
+            about: count_users, get_user, list_users, search_users.
+
+Accuracy
+  single-call   12/12  100%  [76%-100%]
+  abstention    0/12  0%  [0%-24%]
+  over-trigger  0/6  0%  [0%-39%]
+  phantom       0/12  0%  [0%-24%]
+  clarified     1/18  6%  [1%-26%]
+  errors        2/20  (excluded from every rate above)
+
+Per tool  worst first
+  tool          single-call  (95% CI)   confused with  args ok                tokens
+  count_users   2/2  100%  [34%-100%]                 -                         ~59
+  get_user      2/2  100%  [34%-100%]                 2/2  100%  [34%-100%]     ~86
+  list_users    4/4  100%  [51%-100%]                 4/4  100%  [51%-100%]    ~146
+  search_users  4/4  100%  [51%-100%]                 4/4  100%  [51%-100%]    ~158
+
+Confusion matrix
+  expected \ picked  1  2  3  4  -  ?
+  count_users        2  .  .  .  0  0
+  get_user           .  2  .  .  0  0
+  list_users         .  .  4  .  0  0
+  search_users       .  .  .  4  0  0
+  columns: 1=count_users  2=get_user  3=list_users  4=search_users
+  - = no call, ? = a tool name that does not exist
+
+Confusion pairs  the fix list, in order
+  No tool was ever picked when a different one was expected.
+
+Position sensitivity
+  spread 0% across 2 comparable positions
+  position  accuracy
+         0  4/4  100%  [51%-100%]
+         1  2/2  100%  [34%-100%]
+         2  2/2  100%  [34%-100%]
+         3  4/4  100%  [51%-100%]
+
+Findings  0 errors, 1 warning, 2 info
+  warn   run/thin-measurement  count_users, get_user, list_users
+         4 tools rest on fewer than 5 trials, so their accuracy carries an interval too
+         wide to act on. Add tasks or raise --repeat before drawing a conclusion about:
+         count_users, get_user, list_users, search_users.
+  info   run/errored-trials  (run)
+         2 of 20 trials failed at the provider and are excluded from every rate above.
+         They are not counted as the model choosing nothing.
+  info   tasks/thin-coverage  count_users, get_user, search_users
+         3 tools have fewer than 3 tasks, so their accuracy will carry a confidence
+         interval too wide to act on: count_users, get_user, search_users.
+
+No tool was executed. whichtool read tools/list and stopped there.

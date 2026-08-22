@@ -1,0 +1,40 @@
+node_modules/
+dist/
+binaries/
+*.tgz
+*.tsbuildinfo
+
+# Local run output and cache. These are the names the README, action.yml and the CI
+# workflow actually write; the generic ones are rooted so they cannot swallow the
+# committed captures in examples/*/report.*.
+.whichtool-cache/
+whichtool-report*
+whichtool-run*.json
+whichtool-badge*.json
+*.whichtool-run.json
+*.mutated.yaml
+/run.json
+/run-*.json
+/run-*.txt
+/base-run.json
+/head-run.json
+/report.html
+/delta.md
+
+# Secrets never belong in the repo; SPEC §7 forbids them in any saved artifact too.
+.env
+.env.*
+!.env.example
+
+# AI assistant context and local tooling. The design record lives in SPEC.md, which is
+# committed; these files are per-developer working context and stay local.
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.claude/
+.cursor/
+.cursorrules
+.windsurfrules
+.aider*
+.opencode/
+package-lock.json

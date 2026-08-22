@@ -1,0 +1,34 @@
+{
+  "tools": [
+    {
+      "name": "get_document",
+      "description": "Get a document by id and return its contents.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "id": { "type": "string" } },
+        "required": ["id"]
+      },
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "fetch_document",
+      "description": "Fetch a document by id and return its content.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "documentId": { "type": "string" } },
+        "required": ["documentId"]
+      },
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "read_document",
+      "description": "Read a document by its id and return the content.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "docId": { "type": "string" } },
+        "required": ["docId"]
+      },
+      "annotations": { "readOnlyHint": true }
+    }
+  ]
+}

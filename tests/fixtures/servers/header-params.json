@@ -1,0 +1,76 @@
+{
+  "tools": [
+    {
+      "name": "execute_query",
+      "description": "Run a read-only SQL query against a regional replica and return the rows.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "Which replica to read from.",
+            "x-mcp-header": "Region"
+          },
+          "sql": { "type": "string", "description": "The query to run." }
+        },
+        "required": ["region", "sql"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "export_report",
+      "description": "Render a saved report to CSV and return a download link for it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "type": "number",
+            "description": "Numeric tenant id.",
+            "x-mcp-header": "Tenant Id"
+          },
+          "reportId": { "type": "string", "description": "Saved report identifier." }
+        },
+        "required": ["tenant", "reportId"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "stream_events",
+      "description": "Return the audit events recorded for a tenant within a time window.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filters": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "One filter expression.",
+              "x-mcp-header": "Filter"
+            }
+          },
+          "since": { "type": "string", "format": "date-time" }
+        },
+        "required": ["since"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

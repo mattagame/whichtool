@@ -1,0 +1,32 @@
+version: 2
+
+# Actions only, deliberately.
+#
+# Dependabot has no Bun support: it edits package.json and leaves bun.lock untouched, so
+# `bun install --frozen-lockfile` fails and every npm pull request it opens is red on
+# arrival. A pull request that cannot pass is worse than no pull request, so dev-dependency
+# bumps are done by hand with `bun update` — cheap to do, since the package ships with zero
+# runtime dependencies and nothing here reaches a user's machine.
+#
+# Action versions have no lockfile, so this half works properly. Grouped and monthly: a
+# stream of individual bumps on a solo-maintained repository gets ignored rather than
+# reviewed.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ['*']
+    commit-message:
+      prefix: chore
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: chore

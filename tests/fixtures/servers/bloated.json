@@ -1,0 +1,83 @@
+{
+  "tools": [
+    {
+      "name": "query_analytics",
+      "description": "Run an analytics query.\n\nThis tool accepts a query object describing a metric, a set of dimensions, a time range and an optional filter tree. The metric must be one of the metrics registered in the workspace's semantic layer; querying an unregistered metric returns an error rather than an empty result, because an empty result is indistinguishable from a typo. Dimensions are applied in the order given and each one multiplies the cardinality of the result, so a query with four high-cardinality dimensions over a year of data will be rejected by the row-count guard before it reaches the warehouse. The time range is inclusive of its start and exclusive of its end, in the workspace's configured timezone, not UTC, which matters for daily rollups near a DST boundary. Filters are a tree of and/or/not nodes whose leaves compare a dimension to a literal or to a list of literals; comparisons against a metric are not supported and should be expressed as a having clause instead. Results are returned as a column-oriented table together with the query plan that produced them, and the plan is worth reading when a query is slower than expected because it shows which pre-aggregation was or was not used. Pagination is by cursor, not offset, and a cursor expires after fifteen minutes. When the underlying warehouse is unavailable the tool returns the most recent cached result together with the age of that cache rather than failing, unless the caller passed allowStale as false.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string",
+            "enum": [
+              "active_users",
+              "new_users",
+              "returning_users",
+              "churned_users",
+              "sessions",
+              "session_duration",
+              "page_views",
+              "unique_page_views",
+              "bounce_rate",
+              "conversion_rate",
+              "revenue",
+              "revenue_per_user",
+              "orders",
+              "order_value",
+              "refunds",
+              "refund_rate",
+              "tickets_opened",
+              "tickets_closed",
+              "first_response_time",
+              "resolution_time",
+              "nps",
+              "csat",
+              "feature_adoption",
+              "api_calls",
+              "api_errors"
+            ]
+          },
+          "dimensions": { "type": "array", "items": { "type": "string" } },
+          "from": { "type": "string", "format": "date-time" },
+          "to": { "type": "string", "format": "date-time" },
+          "filter": { "type": "object" },
+          "allowStale": { "type": "boolean" },
+          "cursor": { "type": "string" }
+        },
+        "required": ["metric", "from", "to"]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_metrics",
+      "description": "Return the metrics registered in the workspace's semantic layer, with their units.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_dimensions",
+      "description": "Return the dimensions available for a given metric, with their approximate cardinality.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "metric": { "type": "string" } },
+        "required": ["metric"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

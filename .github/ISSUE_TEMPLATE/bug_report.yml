@@ -1,0 +1,80 @@
+name: Bug report
+description: Something whichtool does is wrong, or contradicts what the docs say.
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not report anything exploitable here — see
+        [SECURITY.md](https://github.com/mattagame/whichtool/blob/main/SECURITY.md)
+        for the private route.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: The command you ran
+      description: Complete, including flags. Redact keys.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: What it printed
+      description: |
+        The whole output, not a screenshot. For a `run`, the saved `--format json` report
+        says far more than the terminal does.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: snapshot
+    attributes:
+      label: A snapshot that reproduces it
+      description: |
+        This is the single most useful thing you can attach, because it makes the surface
+        reproducible without access to your server:
+
+        ```
+        whichtool inspect <your target> --save-snapshot ./repro.json
+        ```
+
+        Strip anything sensitive first — tool descriptions sometimes carry internal detail.
+        Paste it here or attach the file.
+      render: json
+
+  - type: input
+    id: version
+    attributes:
+      label: whichtool version
+      description: The output of `whichtool --version`.
+      placeholder: '0.1.0'
+    validations:
+      required: true
+
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime and OS
+      description: '`node --version` or `bun --version`, and which operating system.'
+      placeholder: 'node 22.11.0, Windows 11'
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have removed API keys and anything else sensitive from what I pasted.
+          required: true

@@ -1,0 +1,238 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "malformed.json"
+  },
+  "surface": {
+    "hash": "sha256:6fc071a35f222241bdd81bf8b8c5bc2fb21687ce9181e30024aeddc7f7a7d964",
+    "toolCount": 3,
+    "tools": [
+      {
+        "name": "count_items",
+        "hasDescription": false,
+        "descriptionLength": 0,
+        "semantics": "read",
+        "parameterCount": 0,
+        "requiredParameterCount": 0,
+        "tokens": {
+          "total": 22,
+          "name": 7,
+          "description": 0,
+          "schema": 7,
+          "envelope": 8
+        },
+        "tokenShare": 0.21359223300970873,
+        "servedIndex": 4
+      },
+      {
+        "name": "describe_item",
+        "hasDescription": false,
+        "descriptionLength": 0,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 0,
+        "tokens": {
+          "total": 37,
+          "name": 6,
+          "description": 0,
+          "schema": 23,
+          "envelope": 8
+        },
+        "tokenShare": 0.3592233009708738,
+        "servedIndex": 3
+      },
+      {
+        "name": "list_items",
+        "hasDescription": true,
+        "descriptionLength": 33,
+        "semantics": "read",
+        "parameterCount": 0,
+        "requiredParameterCount": 0,
+        "tokens": {
+          "total": 44,
+          "name": 6,
+          "description": 12,
+          "schema": 13,
+          "envelope": 13
+        },
+        "tokenShare": 0.42718446601941745,
+        "servedIndex": 0
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 103,
+    "byTool": {
+      "count_items": {
+        "total": 22,
+        "name": 7,
+        "description": 0,
+        "schema": 7,
+        "envelope": 8
+      },
+      "describe_item": {
+        "total": 37,
+        "name": 6,
+        "description": 0,
+        "schema": 23,
+        "envelope": 8
+      },
+      "list_items": {
+        "total": 44,
+        "name": 6,
+        "description": 12,
+        "schema": 13,
+        "envelope": 13
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 3,
+      "annotated": 0,
+      "byHint": {
+        "readOnlyHint": 0,
+        "destructiveHint": 0,
+        "idempotentHint": 0,
+        "openWorldHint": 0
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 3,
+    "pairsReported": 3,
+    "pairs": [
+      {
+        "tools": [
+          "count_items",
+          "list_items"
+        ],
+        "score": 0.24561403508771928,
+        "nameScore": 0.5217391304347826,
+        "descriptionScore": 0,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "items"
+        ]
+      },
+      {
+        "tools": [
+          "count_items",
+          "describe_item"
+        ],
+        "score": 0.23076923076923078,
+        "nameScore": 0.23076923076923078,
+        "descriptionScore": 1,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "describe_item",
+          "list_items"
+        ],
+        "score": 0.13559322033898305,
+        "nameScore": 0.24,
+        "descriptionScore": 0,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": []
+  },
+  "diagnostics": [
+    {
+      "code": "surface/duplicate-tool-name",
+      "severity": "error",
+      "message": "Duplicate tool name `list_items` at index 1; the entry at index 0 is the one kept.",
+      "tool": "list_items",
+      "detail": {
+        "index": 1,
+        "keptIndex": 0
+      }
+    },
+    {
+      "code": "surface/malformed-tool",
+      "severity": "error",
+      "message": "Tool at index 5 is not an object and was skipped.",
+      "detail": {
+        "index": 5
+      }
+    },
+    {
+      "code": "surface/missing-tool-name",
+      "severity": "error",
+      "message": "Tool at index 2 has no usable `name` and was skipped.",
+      "detail": {
+        "index": 2
+      }
+    },
+    {
+      "code": "annotations/absent-surface-wide",
+      "severity": "warning",
+      "message": "No tool on this surface declares any annotation. Clients therefore assume the documented defaults for every one of them (not read-only, potentially destructive, not idempotent, open-world), which changes the confirmation UX for all 3 tools without the maintainer choosing it.",
+      "tools": [
+        "count_items",
+        "describe_item",
+        "list_items"
+      ],
+      "detail": {
+        "defaults": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": true
+        }
+      }
+    },
+    {
+      "code": "descriptions/missing",
+      "severity": "warning",
+      "message": "Tool `count_items` has no description. The model has only the name and the schema to go on.",
+      "tool": "count_items"
+    },
+    {
+      "code": "descriptions/missing",
+      "severity": "warning",
+      "message": "Tool `describe_item` has no description. The model has only the name and the schema to go on.",
+      "tool": "describe_item"
+    },
+    {
+      "code": "surface/missing-input-schema",
+      "severity": "warning",
+      "message": "Tool `count_items` has no `inputSchema`; an empty object schema was assumed.",
+      "tool": "count_items"
+    },
+    {
+      "code": "surface/non-string-description",
+      "severity": "warning",
+      "message": "Tool `describe_item` has a non-string `description`; treated as absent.",
+      "tool": "describe_item"
+    }
+  ],
+  "thresholds": [],
+  "analysisOk": false,
+  "thresholdsOk": true,
+  "ok": false
+}

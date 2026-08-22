@@ -1,0 +1,71 @@
+whichtool inspect
+  target   snapshot  contradictory-annotations.json
+  surface  33238586f62e  4 tools  ~296 tokens (estimate, heuristic-bpe-v1)
+
+Worst first
+  1. error  annotations/contradictory-read-only-destructive  purge_audit_log
+            Tool `purge_audit_log` declares both `readOnlyHint: true` and
+            `destructiveHint: true`. A read-only tool cannot be destructive; clients
+            ignore `destructiveHint` when `readOnlyHint` is true, so one of the two is a
+            lie about the tool.
+  2. warn   annotations/destructive-name-declared-safe  delete_workspace
+            Tool `delete_workspace` leads with `delete` but declares `destructiveHint:
+            false`, which tells clients to skip the confirmation step.
+  3. warn   annotations/read-only-with-mutating-name  purge_audit_log
+            Tool `purge_audit_log` declares `readOnlyHint: true` but its name leads with
+            `purge`, which reads as a write. Either the hint or the name is misleading
+            the model.
+  1 more error or warning below.
+
+Context cost  ~296 tokens total, mcp-neutral-compact
+  tool              tokens  share  desc  schema
+  purge_audit_log      ~79    27%   ~21     ~36
+  delete_workspace     ~75    25%   ~20     ~34
+  list_projects        ~72    24%   ~19     ~34
+  update_settings      ~70    24%   ~18     ~32
+  Structural estimate, not a real vocabulary, and not provider-specific. Measured
+  against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what
+  Anthropic counted: the providers disagree with each other by more than this estimate
+  disagrees with either. Use it to compare tools against each other and to spot bloat;
+  for a bill, read the number your provider reports.
+
+Annotations  4/4 tools annotated
+  readOnlyHint 3/4   destructiveHint 2/4   idempotentHint 1/4   openWorldHint 0/4
+  Annotations are hints, not guarantees: the MCP spec is explicit that a client must not
+  rely on them as a security boundary. whichtool checks their internal consistency, not
+  their truthfulness; only running the tool could establish that, and whichtool never
+  does.
+
+Lexical overlap  6 pairs scored
+  No pair scores at or above 0.40. Highest: 0.33 (delete_workspace <-> list_projects).
+
+Deprecated features
+  Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated
+  features is visible in a tools/list response or a tool definition. They are all
+  client-, authorization- or transport-level, so there is nothing on a surface to flag.
+  The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.
+
+Findings  1 error, 3 warnings, 2 info
+  error  annotations/contradictory-read-only-destructive  purge_audit_log
+         Tool `purge_audit_log` declares both `readOnlyHint: true` and `destructiveHint:
+         true`. A read-only tool cannot be destructive; clients ignore `destructiveHint`
+         when `readOnlyHint` is true, so one of the two is a lie about the tool.
+  warn   annotations/destructive-name-declared-safe  delete_workspace
+         Tool `delete_workspace` leads with `delete` but declares `destructiveHint:
+         false`, which tells clients to skip the confirmation step.
+  warn   annotations/read-only-with-mutating-name  purge_audit_log
+         Tool `purge_audit_log` declares `readOnlyHint: true` but its name leads with
+         `purge`, which reads as a write. Either the hint or the name is misleading the
+         model.
+  warn   annotations/read-only-with-mutating-name  update_settings
+         Tool `update_settings` declares `readOnlyHint: true` but its name leads with
+         `update`, which reads as a write. Either the hint or the name is misleading the
+         model.
+  info   annotations/unknown-key  list_projects
+         Tool `list_projects`: `annotations.cachingHint` is not a known MCP annotation;
+         clients will ignore it.
+  info   annotations/write-hint-with-read-name  list_projects
+         Tool `list_projects` leads with `list` but declares `readOnlyHint: false`, so
+         clients treat it as a write and may prompt for confirmation.
+
+No tool was executed. whichtool read tools/list and stopped there.

@@ -1,0 +1,73 @@
+whichtool inspect
+  target   snapshot  ./examples/ambiguous-server/tools.json
+  surface  5086ee475f20  8 tools  ~660 tokens (estimate, heuristic-bpe-v1)
+
+Worst first
+  1. error  descriptions/identical  list_issues, search_issues
+            `list_issues` and `search_issues` have byte-identical descriptions. Nothing
+            in the text tells the model which one to pick.
+  2. warn   annotations/destructive-name-declared-safe  deleteIssue
+            Tool `deleteIssue` leads with `delete` but declares `destructiveHint:
+            false`, which tells clients to skip the confirmation step.
+  3. warn   annotations/partial-coverage  issues.comment.add, update_issue
+            6 of 8 tools declare annotations. The rest silently fall back to the
+            defaults, so the surface is inconsistent about what a client should confirm.
+  2 more errors and warnings below.
+
+Context cost  ~660 tokens total, mcp-neutral-compact
+  tool                 tokens  share  desc  schema
+  list_issues            ~130    20%   ~25     ~86
+  search_issues          ~103    16%   ~25     ~58
+  close_issue             ~84    13%   ~20     ~44
+  issues.comment.add      ~77    12%   ~10     ~45
+  deleteIssue             ~71    11%   ~21     ~32
+  fetch_issue_details     ~69    10%   ~16     ~30
+  get_issue               ~64    10%   ~13     ~32
+  update_issue            ~62     9%    ~0     ~47  no description
+  Structural estimate, not a real vocabulary, and not provider-specific. Measured
+  against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what
+  Anthropic counted: the providers disagree with each other by more than this estimate
+  disagrees with either. Use it to compare tools against each other and to spot bloat;
+  for a bill, read the number your provider reports.
+
+Annotations  6/8 tools annotated
+  readOnlyHint 5/8   destructiveHint 1/8   idempotentHint 0/8   openWorldHint 0/8
+  Annotations are hints, not guarantees: the MCP spec is explicit that a client must not
+  rely on them as a security boundary. whichtool checks their internal consistency, not
+  their truthfulness; only running the tool could establish that, and whichtool never
+  does.
+
+Lexical overlap  28 pairs scored
+  score  pair                               shared terms
+   0.93  list_issues <-> search_issues      identical description
+   0.59  fetch_issue_details <-> get_issue  key, issue
+  Overlap predicts confusion, it does not measure it. `whichtool run` puts these pairs
+  in front of a model and reports which ones actually get swapped.
+
+Deprecated features
+  Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated
+  features is visible in a tools/list response or a tool definition. They are all
+  client-, authorization- or transport-level, so there is nothing on a surface to flag.
+  The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.
+
+Findings  1 error, 4 warnings, 1 info
+  error  descriptions/identical  list_issues, search_issues
+         `list_issues` and `search_issues` have byte-identical descriptions. Nothing in
+         the text tells the model which one to pick.
+  warn   annotations/destructive-name-declared-safe  deleteIssue
+         Tool `deleteIssue` leads with `delete` but declares `destructiveHint: false`,
+         which tells clients to skip the confirmation step.
+  warn   annotations/partial-coverage  issues.comment.add, update_issue
+         6 of 8 tools declare annotations. The rest silently fall back to the defaults,
+         so the surface is inconsistent about what a client should confirm.
+  warn   annotations/read-only-with-mutating-name  close_issue
+         Tool `close_issue` declares `readOnlyHint: true` but its name leads with
+         `close`, which reads as a write. Either the hint or the name is misleading the
+         model.
+  warn   descriptions/missing  update_issue
+         Tool `update_issue` has no description. The model has only the name and the
+         schema to go on.
+  info   overlap/notable  fetch_issue_details, get_issue
+         `fetch_issue_details` and `get_issue` overlap at 0.59.
+
+No tool was executed. whichtool read tools/list and stopped there.

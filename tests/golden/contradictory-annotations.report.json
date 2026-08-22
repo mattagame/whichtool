@@ -1,0 +1,300 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "contradictory-annotations.json"
+  },
+  "surface": {
+    "hash": "sha256:33238586f62e05cefc33795a1197b9364d61ba4fccd9ab95847f3d6fb91a0877",
+    "toolCount": 4,
+    "tools": [
+      {
+        "name": "delete_workspace",
+        "hasDescription": true,
+        "descriptionLength": 65,
+        "semantics": "destructive",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 75,
+          "name": 8,
+          "description": 20,
+          "schema": 34,
+          "envelope": 13
+        },
+        "tokenShare": 0.2533783783783784,
+        "servedIndex": 1,
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true
+        }
+      },
+      {
+        "name": "list_projects",
+        "hasDescription": true,
+        "descriptionLength": 60,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 72,
+          "name": 6,
+          "description": 19,
+          "schema": 34,
+          "envelope": 13
+        },
+        "tokenShare": 0.24324324324324326,
+        "servedIndex": 3,
+        "annotations": {
+          "cachingHint": "aggressive",
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "purge_audit_log",
+        "hasDescription": true,
+        "descriptionLength": 69,
+        "semantics": "destructive",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 79,
+          "name": 9,
+          "description": 21,
+          "schema": 36,
+          "envelope": 13
+        },
+        "tokenShare": 0.2668918918918919,
+        "servedIndex": 0,
+        "annotations": {
+          "destructiveHint": true,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "update_settings",
+        "hasDescription": true,
+        "descriptionLength": 58,
+        "semantics": "mutate",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 70,
+          "name": 7,
+          "description": 18,
+          "schema": 32,
+          "envelope": 13
+        },
+        "tokenShare": 0.23648648648648649,
+        "servedIndex": 2,
+        "annotations": {
+          "readOnlyHint": true
+        }
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 296,
+    "byTool": {
+      "delete_workspace": {
+        "total": 75,
+        "name": 8,
+        "description": 20,
+        "schema": 34,
+        "envelope": 13
+      },
+      "list_projects": {
+        "total": 72,
+        "name": 6,
+        "description": 19,
+        "schema": 34,
+        "envelope": 13
+      },
+      "purge_audit_log": {
+        "total": 79,
+        "name": 9,
+        "description": 21,
+        "schema": 36,
+        "envelope": 13
+      },
+      "update_settings": {
+        "total": 70,
+        "name": 7,
+        "description": 18,
+        "schema": 32,
+        "envelope": 13
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 4,
+      "annotated": 4,
+      "byHint": {
+        "readOnlyHint": 3,
+        "destructiveHint": 2,
+        "idempotentHint": 1,
+        "openWorldHint": 0
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 6,
+    "pairsReported": 6,
+    "pairs": [
+      {
+        "tools": [
+          "delete_workspace",
+          "list_projects"
+        ],
+        "score": 0.3291139240506329,
+        "nameScore": 0,
+        "descriptionScore": 0.3937007874015748,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "workspace"
+        ]
+      },
+      {
+        "tools": [
+          "list_projects",
+          "update_settings"
+        ],
+        "score": 0.2,
+        "nameScore": 0,
+        "descriptionScore": 0.23333333333333334,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "workspace"
+        ]
+      },
+      {
+        "tools": [
+          "delete_workspace",
+          "update_settings"
+        ],
+        "score": 0.16455696202531644,
+        "nameScore": 0.06060606060606061,
+        "descriptionScore": 0.176,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "workspace"
+        ]
+      },
+      {
+        "tools": [
+          "list_projects",
+          "purge_audit_log"
+        ],
+        "score": 0.09937888198757763,
+        "nameScore": 0,
+        "descriptionScore": 0.12213740458015267,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "purge_audit_log",
+          "update_settings"
+        ],
+        "score": 0.062111801242236024,
+        "nameScore": 0,
+        "descriptionScore": 0.07751937984496124,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "delete_workspace",
+          "purge_audit_log"
+        ],
+        "score": 0.05917159763313609,
+        "nameScore": 0,
+        "descriptionScore": 0.058823529411764705,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": []
+  },
+  "diagnostics": [
+    {
+      "code": "annotations/contradictory-read-only-destructive",
+      "severity": "error",
+      "message": "Tool `purge_audit_log` declares both `readOnlyHint: true` and `destructiveHint: true`. A read-only tool cannot be destructive; clients ignore `destructiveHint` when `readOnlyHint` is true, so one of the two is a lie about the tool.",
+      "tool": "purge_audit_log"
+    },
+    {
+      "code": "annotations/destructive-name-declared-safe",
+      "severity": "warning",
+      "message": "Tool `delete_workspace` leads with `delete` but declares `destructiveHint: false`, which tells clients to skip the confirmation step.",
+      "tool": "delete_workspace",
+      "detail": {
+        "verb": "delete"
+      }
+    },
+    {
+      "code": "annotations/read-only-with-mutating-name",
+      "severity": "warning",
+      "message": "Tool `purge_audit_log` declares `readOnlyHint: true` but its name leads with `purge`, which reads as a write. Either the hint or the name is misleading the model.",
+      "tool": "purge_audit_log",
+      "detail": {
+        "verb": "purge",
+        "semantics": "destructive"
+      }
+    },
+    {
+      "code": "annotations/read-only-with-mutating-name",
+      "severity": "warning",
+      "message": "Tool `update_settings` declares `readOnlyHint: true` but its name leads with `update`, which reads as a write. Either the hint or the name is misleading the model.",
+      "tool": "update_settings",
+      "detail": {
+        "verb": "update",
+        "semantics": "mutate"
+      }
+    },
+    {
+      "code": "annotations/unknown-key",
+      "severity": "info",
+      "message": "Tool `list_projects`: `annotations.cachingHint` is not a known MCP annotation; clients will ignore it.",
+      "tool": "list_projects",
+      "detail": {
+        "key": "cachingHint"
+      }
+    },
+    {
+      "code": "annotations/write-hint-with-read-name",
+      "severity": "info",
+      "message": "Tool `list_projects` leads with `list` but declares `readOnlyHint: false`, so clients treat it as a write and may prompt for confirmation.",
+      "tool": "list_projects",
+      "detail": {
+        "verb": "list",
+        "semantics": "read"
+      }
+    }
+  ],
+  "thresholds": [],
+  "analysisOk": false,
+  "thresholdsOk": true,
+  "ok": false
+}

@@ -1,0 +1,8 @@
+{
+  "target": { "transport": "snapshot", "path": "./tools.json" },
+  "tasks": "./whichtool.tasks.yaml",
+  "provider": { "name": "ollama", "model": "qwen3:4b" },
+  "trials": { "repeat": 3, "permute": true, "temperature": 0, "concurrency": 3 },
+  "thresholds": { "minAccuracy": 0.9, "maxOverTrigger": 0.05, "maxContextTokens": 4000 },
+  "report": { "formats": ["terminal", "json"], "out": "./whichtool-report" }
+}

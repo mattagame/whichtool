@@ -1,0 +1,9 @@
+dist
+binaries
+node_modules
+coverage
+bun.lock
+*.tgz
+.whichtool-cache
+tests/golden
+examples/*/report.*

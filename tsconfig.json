@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": "dist",
+
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": false,
+
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    // Deliberately `node` only: `@types/bun` must not be visible while type-checking
+    // `src/`, so that a stray `Bun.*` in `src/core/` is a compile error rather than a
+    // silent portability regression (SPEC §5). `src/runtime/bun.ts` declares the tiny
+    // slice of the Bun global it needs, locally.
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

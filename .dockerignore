@@ -1,0 +1,17 @@
+node_modules
+dist
+binaries
+.git
+.github
+.env
+.env.*
+.npmrc
+tests
+examples
+docs
+*.md
+!README.md
+!LICENSE.md
+.whichtool-cache
+coverage
+*.tgz

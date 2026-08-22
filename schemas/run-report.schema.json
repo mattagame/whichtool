@@ -1,0 +1,550 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mattagame/whichtool/main/schemas/run-report.schema.json",
+  "title": "whichtool run report",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "const": "whichtool.run/2" },
+    "reproducibility": { "$ref": "#/$defs/reproducibility" },
+    "target": { "$ref": "common.schema.json#/$defs/surfaceSource" },
+    "tasks": { "$ref": "#/$defs/taskSelection" },
+    "metrics": { "$ref": "#/$defs/runMetrics" },
+    "contextCost": {
+      "$ref": "common.schema.json#/$defs/surfaceTokens",
+      "$comment": "Runtime verifies each tool total from its components, the surface total from tool totals, and the tool-name set against metrics.byTool."
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+    },
+    "thresholds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/runThreshold" }
+    },
+    "thresholdsOk": { "type": "boolean" },
+    "execution": { "$ref": "#/$defs/execution" },
+    "ok": { "type": "boolean" },
+    "durationMs": { "type": "number", "minimum": 0 },
+    "trials": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scoredTrial" },
+      "maxItems": 100000
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "reproducibility",
+    "target",
+    "tasks",
+    "metrics",
+    "contextCost",
+    "diagnostics",
+    "thresholds",
+    "thresholdsOk",
+    "execution",
+    "ok",
+    "durationMs",
+    "trials"
+  ],
+  "allOf": [
+    {
+      "$comment": "The headline passes exactly when execution and configured thresholds pass and no error-severity diagnostic remains.",
+      "if": {
+        "properties": {
+          "execution": {
+            "properties": { "ok": { "const": true } },
+            "required": ["ok"]
+          },
+          "thresholdsOk": { "const": true },
+          "diagnostics": {
+            "not": {
+              "contains": {
+                "properties": { "severity": { "const": "error" } },
+                "required": ["severity"]
+              }
+            }
+          }
+        },
+        "required": ["execution", "thresholdsOk", "diagnostics"]
+      },
+      "then": { "properties": { "ok": { "const": true } } },
+      "else": { "properties": { "ok": { "const": false } } }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "providerCapabilities": {
+      "type": "object",
+      "properties": {
+        "seed": { "type": "boolean" },
+        "temperatureZero": { "type": "boolean" },
+        "logprobs": { "type": "boolean" },
+        "disableThinking": { "type": "boolean" }
+      },
+      "required": ["seed", "temperatureZero", "logprobs", "disableThinking"],
+      "additionalProperties": false
+    },
+    "reproducibility": {
+      "type": "object",
+      "properties": {
+        "whichtoolVersion": { "type": "string" },
+        "provider": { "type": "string" },
+        "model": { "type": "string" },
+        "endpoint": { "type": ["string", "null"] },
+        "requestFingerprint": { "type": ["string", "null"] },
+        "providerCapabilities": { "$ref": "#/$defs/providerCapabilities" },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+        "reasoningEffort": { "type": ["string", "null"] },
+        "seed": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "repeat": { "type": "integer", "minimum": 1, "maximum": 1000 },
+        "permuted": { "type": "boolean" },
+        "concurrency": { "type": "integer", "minimum": 1, "maximum": 64 },
+        "surfaceHash": { "type": "string" },
+        "taskSetVersion": { "type": "integer" },
+        "taskSetSource": { "type": "string" },
+        "taskSetSurface": { "type": ["string", "null"] }
+      },
+      "required": [
+        "whichtoolVersion",
+        "provider",
+        "model",
+        "endpoint",
+        "requestFingerprint",
+        "providerCapabilities",
+        "temperature",
+        "reasoningEffort",
+        "seed",
+        "repeat",
+        "permuted",
+        "concurrency",
+        "surfaceHash",
+        "taskSetVersion",
+        "taskSetSource",
+        "taskSetSurface"
+      ],
+      "additionalProperties": false
+    },
+    "taskSelection": {
+      "type": "object",
+      "properties": {
+        "inFile": { "type": "integer", "minimum": 0 },
+        "selected": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "distractors": { "type": "integer", "minimum": 0 },
+        "only": { "type": "array", "items": { "type": "string" } },
+        "skip": { "type": "array", "items": { "type": "string" } },
+        "list": {
+          "type": "array",
+          "maxItems": 100000,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "prompt": { "type": "string" },
+              "expected": { "type": ["string", "null"] },
+              "tags": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["id", "prompt", "expected", "tags"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["inFile", "selected", "distractors", "only", "skip", "list"],
+      "additionalProperties": false
+    },
+    "runThreshold": {
+      "type": "object",
+      "$comment": "Runtime also rejects duplicate threshold names and verifies actual/ok against metrics or contextCost; JSON Schema cannot compare those sibling report values.",
+      "properties": {
+        "name": { "enum": ["minAccuracy", "maxOverTrigger", "maxContextTokens"] },
+        "limit": { "type": "number" },
+        "actual": { "type": "number" },
+        "ok": { "type": "boolean" }
+      },
+      "required": ["name", "limit", "actual", "ok"],
+      "oneOf": [
+        {
+          "properties": {
+            "name": { "const": "minAccuracy" },
+            "limit": { "type": "number", "minimum": 0, "maximum": 1 },
+            "actual": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        {
+          "properties": {
+            "name": { "const": "maxOverTrigger" },
+            "limit": { "type": "number", "minimum": 0, "maximum": 1 },
+            "actual": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        {
+          "properties": {
+            "name": { "const": "maxContextTokens" },
+            "limit": { "type": "integer", "minimum": 0 },
+            "actual": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "toolMetrics": {
+      "type": "object",
+      "properties": {
+        "tool": { "type": "string" },
+        "accuracy": { "$ref": "common.schema.json#/$defs/proportion" },
+        "confusedWith": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tool": { "type": "string" },
+              "count": { "type": "integer", "minimum": 0 }
+            },
+            "required": ["tool", "count"],
+            "additionalProperties": false
+          }
+        },
+        "abstained": { "type": "integer", "minimum": 0 },
+        "phantom": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "integer", "minimum": 0 },
+        "argumentAccuracy": { "$ref": "common.schema.json#/$defs/proportion" },
+        "hallucinatedParameters": { "type": "integer", "minimum": 0 },
+        "contextTokens": { "type": "integer", "minimum": 0 }
+      },
+      "required": [
+        "tool",
+        "accuracy",
+        "confusedWith",
+        "abstained",
+        "phantom",
+        "errors",
+        "argumentAccuracy",
+        "hallucinatedParameters",
+        "contextTokens"
+      ],
+      "additionalProperties": false
+    },
+    "confusionPair": {
+      "type": "object",
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "swaps": { "type": "integer", "minimum": 0 },
+        "rate": { "$ref": "common.schema.json#/$defs/proportion" },
+        "aChosenWhenBExpected": { "type": "integer", "minimum": 0 },
+        "bChosenWhenAExpected": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["tools", "swaps", "rate", "aChosenWhenBExpected", "bChosenWhenAExpected"],
+      "additionalProperties": false
+    },
+    "runMetrics": {
+      "type": "object",
+      "properties": {
+        "trials": {
+          "type": "object",
+          "properties": {
+            "planned": { "type": "integer", "minimum": 0, "maximum": 100000 },
+            "scored": { "type": "integer", "minimum": 0, "maximum": 100000 },
+            "errored": { "type": "integer", "minimum": 0, "maximum": 100000 }
+          },
+          "required": ["planned", "scored", "errored"],
+          "additionalProperties": false
+        },
+        "accuracy": { "$ref": "common.schema.json#/$defs/proportion" },
+        "abstention": { "$ref": "common.schema.json#/$defs/proportion" },
+        "overTrigger": { "$ref": "common.schema.json#/$defs/proportion" },
+        "phantom": { "$ref": "common.schema.json#/$defs/proportion" },
+        "multiCallRate": { "$ref": "common.schema.json#/$defs/proportion" },
+        "clarification": { "$ref": "common.schema.json#/$defs/proportion" },
+        "byTool": { "type": "array", "items": { "$ref": "#/$defs/toolMetrics" } },
+        "confusionMatrix": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "confusionPairs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/confusionPair" }
+        },
+        "position": {
+          "type": "object",
+          "properties": {
+            "buckets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "position": { "type": "integer", "minimum": 0 },
+                  "accuracy": { "$ref": "common.schema.json#/$defs/proportion" }
+                },
+                "required": ["position", "accuracy"],
+                "additionalProperties": false
+              }
+            },
+            "spread": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "comparableTasks": { "type": "integer", "minimum": 0 },
+            "method": { "type": "string" }
+          },
+          "required": ["buckets", "spread", "comparableTasks", "method"],
+          "additionalProperties": false
+        },
+        "minTrialsPerTool": { "type": "integer", "minimum": 0 }
+      },
+      "required": [
+        "trials",
+        "accuracy",
+        "abstention",
+        "overTrigger",
+        "phantom",
+        "multiCallRate",
+        "clarification",
+        "byTool",
+        "confusionMatrix",
+        "confusionPairs",
+        "position",
+        "minTrialsPerTool"
+      ],
+      "additionalProperties": false
+    },
+    "execution": {
+      "type": "object",
+      "$comment": "Runtime verifies planned === tasks.selected * reproducibility.repeat and checks every count, rate, and verdict against the trial coverage.",
+      "properties": {
+        "ok": { "type": "boolean" },
+        "planned": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "completed": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "scored": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "errored": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "errorRate": { "$ref": "common.schema.json#/$defs/proportion" },
+        "maxErrorRate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "minScored": { "type": "integer", "minimum": 1 }
+      },
+      "required": [
+        "ok",
+        "planned",
+        "completed",
+        "scored",
+        "errored",
+        "errorRate",
+        "maxErrorRate",
+        "minScored"
+      ],
+      "additionalProperties": false
+    },
+    "argumentCheck": {
+      "type": "object",
+      "properties": {
+        "missingRequired": { "type": "array", "items": { "type": "string" } },
+        "hallucinated": { "type": "array", "items": { "type": "string" } },
+        "wrongType": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "expected": { "type": "string" },
+              "got": { "type": "string" }
+            },
+            "required": ["name", "expected", "got"],
+            "additionalProperties": false
+          }
+        },
+        "parsed": { "type": "boolean" },
+        "vacuous": { "type": "boolean" }
+      },
+      "required": ["missingRequired", "hallucinated", "wrongType", "parsed", "vacuous"],
+      "additionalProperties": false
+    },
+    "recordedToolCall": {
+      "type": "object",
+      "properties": {
+        "name": { "type": ["string", "null"] },
+        "arguments": { "type": ["object", "null"] },
+        "rawArguments": { "type": "string" }
+      },
+      "required": ["name", "arguments"],
+      "additionalProperties": false
+    },
+    "scoredTrial": {
+      "type": "object",
+      "$comment": "Runtime also guarantees callCount === calls.length; pick, arguments, and rawArguments project calls[0]; order is a permutation of the measured surface; expectedPosition locates expected in order (or is -1 for a distractor); and real-task tool verdicts reflect equality with expected plus surface membership. Standard JSON Schema 2020-12 cannot compare sibling values, copy an array item, or test membership in another report object.",
+      "properties": {
+        "taskId": { "type": "string" },
+        "trialIndex": { "type": "integer", "minimum": 0, "maximum": 999 },
+        "expected": { "type": ["string", "null"] },
+        "pick": { "type": ["string", "null"] },
+        "arguments": { "type": ["object", "null"] },
+        "rawArguments": { "type": "string" },
+        "calls": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/recordedToolCall" },
+          "maxItems": 1000
+        },
+        "text": { "type": "string" },
+        "callCount": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "order": { "type": "array", "items": { "type": "string" } },
+        "expectedPosition": { "type": "integer", "minimum": -1 },
+        "latencyMs": { "type": "number", "minimum": 0 },
+        "usage": {
+          "type": "object",
+          "properties": {
+            "promptTokens": { "type": "integer", "minimum": 0 },
+            "completionTokens": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "reasoningChars": { "type": "integer", "minimum": 0 },
+        "error": {
+          "type": "object",
+          "properties": {
+            "message": { "type": "string" },
+            "retryable": { "type": "boolean" },
+            "hint": { "type": "string" }
+          },
+          "required": ["message", "retryable"],
+          "additionalProperties": false
+        },
+        "verdict": {
+          "enum": [
+            "correct",
+            "wrong-tool",
+            "phantom",
+            "abstained",
+            "correct-abstention",
+            "over-triggered",
+            "unexpected-additional-calls",
+            "error"
+          ]
+        },
+        "unexpectedAdditionalCalls": { "type": "boolean" },
+        "argumentCheck": { "$ref": "#/$defs/argumentCheck" },
+        "askedForClarification": { "type": "boolean" }
+      },
+      "required": [
+        "taskId",
+        "trialIndex",
+        "expected",
+        "pick",
+        "arguments",
+        "calls",
+        "text",
+        "callCount",
+        "order",
+        "expectedPosition",
+        "latencyMs",
+        "verdict",
+        "unexpectedAdditionalCalls",
+        "askedForClarification"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "calls": { "minItems": 2 } },
+            "required": ["calls"]
+          },
+          "then": {
+            "properties": { "unexpectedAdditionalCalls": { "const": true } }
+          },
+          "else": {
+            "properties": { "unexpectedAdditionalCalls": { "const": false } }
+          }
+        },
+        {
+          "if": { "required": ["error"] },
+          "then": {
+            "properties": {
+              "pick": { "type": "null" },
+              "arguments": { "type": "null" },
+              "calls": { "maxItems": 0 },
+              "text": { "const": "" },
+              "callCount": { "const": 0 },
+              "latencyMs": { "const": 0 },
+              "verdict": { "const": "error" },
+              "unexpectedAdditionalCalls": { "const": false },
+              "askedForClarification": { "const": false }
+            },
+            "not": {
+              "anyOf": [
+                { "required": ["rawArguments"] },
+                { "required": ["usage"] },
+                { "required": ["reasoningChars"] },
+                { "required": ["argumentCheck"] }
+              ]
+            }
+          },
+          "else": { "properties": { "verdict": { "not": { "const": "error" } } } }
+        },
+        {
+          "if": {
+            "properties": { "verdict": { "const": "unexpected-additional-calls" } },
+            "required": ["verdict"]
+          },
+          "then": {
+            "properties": {
+              "expected": { "type": "string" },
+              "pick": { "type": "string" },
+              "calls": { "minItems": 2 },
+              "unexpectedAdditionalCalls": { "const": true }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "expected": { "type": "null" },
+              "calls": { "maxItems": 0 },
+              "verdict": { "not": { "const": "error" } }
+            },
+            "required": ["expected", "calls", "verdict"]
+          },
+          "then": { "properties": { "verdict": { "const": "correct-abstention" } } }
+        },
+        {
+          "if": {
+            "properties": {
+              "expected": { "type": "null" },
+              "calls": { "minItems": 1 },
+              "verdict": { "not": { "const": "error" } }
+            },
+            "required": ["expected", "calls", "verdict"]
+          },
+          "then": { "properties": { "verdict": { "const": "over-triggered" } } }
+        },
+        {
+          "if": {
+            "properties": {
+              "expected": { "type": "string" },
+              "pick": { "type": "null" },
+              "calls": { "maxItems": 0 },
+              "verdict": { "not": { "const": "error" } }
+            },
+            "required": ["expected", "pick", "calls", "verdict"]
+          },
+          "then": { "properties": { "verdict": { "const": "abstained" } } }
+        },
+        {
+          "if": {
+            "properties": {
+              "expected": { "type": "string" },
+              "pick": { "type": "null" },
+              "calls": { "minItems": 1 },
+              "verdict": { "not": { "const": "error" } }
+            },
+            "required": ["expected", "pick", "calls", "verdict"]
+          },
+          "then": { "properties": { "verdict": { "const": "phantom" } } }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

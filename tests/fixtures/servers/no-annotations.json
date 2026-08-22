@@ -1,0 +1,40 @@
+{
+  "tools": [
+    {
+      "name": "list_repositories",
+      "description": "List the repositories visible to the authenticated account.",
+      "inputSchema": { "type": "object", "properties": {} }
+    },
+    {
+      "name": "create_branch",
+      "description": "Create a branch pointing at the given commit.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "repo": { "type": "string" },
+          "name": { "type": "string" },
+          "sha": { "type": "string" }
+        },
+        "required": ["repo", "name", "sha"]
+      }
+    },
+    {
+      "name": "delete_branch",
+      "description": "Delete a branch. The branch history becomes unreachable unless another ref points at it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "repo": { "type": "string" }, "name": { "type": "string" } },
+        "required": ["repo", "name"]
+      }
+    },
+    {
+      "name": "get_commit",
+      "description": "Return one commit's metadata, message and changed-file list.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "repo": { "type": "string" }, "sha": { "type": "string" } },
+        "required": ["repo", "sha"]
+      }
+    }
+  ]
+}

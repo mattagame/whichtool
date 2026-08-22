@@ -1,0 +1,59 @@
+name: A finding is wrong
+description: whichtool reported something that is not true of your surface, or missed something that is.
+labels: ['finding']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most valuable kind of report the project gets. A linter that cries wolf
+        is worse than no linter, and one that stays quiet on a real problem is worse still.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Which way round
+      options:
+        - False positive - it reported a problem that is not one
+        - False negative - it missed a problem that is real
+    validations:
+      required: true
+
+  - type: input
+    id: code
+    attributes:
+      label: Diagnostic code
+      description: For a false positive, the `code` on the finding. Leave blank for a miss.
+      placeholder: 'overlap/high'
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is wrong
+      description: |
+        What does the surface actually mean, and why does the finding misread it? Domain
+        knowledge is the part the tool cannot have — this is where it belongs.
+    validations:
+      required: true
+
+  - type: textarea
+    id: snapshot
+    attributes:
+      label: The snapshot
+      description: |
+        ```
+        whichtool inspect <your target> --save-snapshot ./repro.json
+        ```
+
+        Strip anything sensitive first. Trimming it to the two or three tools involved is
+        welcome, as long as it still reproduces.
+      render: json
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have removed API keys and anything else sensitive from what I pasted.
+          required: true

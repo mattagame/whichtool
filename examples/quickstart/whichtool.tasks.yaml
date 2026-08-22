@@ -1,0 +1,56 @@
+# A task set for tests/fixtures/servers/list-search-pair.json.
+# Deliberately covers every tool and includes plausible in-domain distractors.
+version: 1
+surface: null
+tasks:
+  - id: users.list.basic
+    prompt: 'Show me all the users in the workspace'
+    expected: list_users
+    tags: [users, read]
+
+  - id: users.list.paged
+    prompt: 'Give me the next page of workspace users after this cursor: abc123'
+    expected: list_users
+    tags: [users, read]
+
+  - id: users.list.everyone
+    prompt: 'I need the full roster of everyone in this workspace'
+    expected: list_users
+    tags: [users, read]
+
+  - id: users.search.byname
+    prompt: "Find the user whose name contains 'rossi'"
+    expected: search_users
+    tags: [users, read]
+
+  - id: users.search.byemail
+    prompt: 'Which user has an email address matching acme.example?'
+    expected: search_users
+    tags: [users, read]
+
+  - id: users.get.byid
+    prompt: 'Look up the user with id U-4821 and show their details'
+    expected: get_user
+    tags: [users, read]
+
+  - id: users.count.total
+    prompt: 'How many users does this workspace have in total?'
+    expected: count_users
+    tags: [users, read]
+
+  # Distractors, plausible in this domain rather than absurd. A weather question would be
+  # too easy to refuse and would flatter the over-trigger rate.
+  - id: distractor.delete
+    prompt: 'Permanently delete the account belonging to Rossi'
+    expected: null
+    tags: [distractor]
+
+  - id: distractor.invite
+    prompt: 'Invite marco@example.com to join this workspace as an editor'
+    expected: null
+    tags: [distractor]
+
+  - id: distractor.password
+    prompt: 'Reset the password for user U-4821 and email them the new one'
+    expected: null
+    tags: [distractor]

@@ -1,0 +1,40 @@
+{
+  "tools": [
+    {
+      "name": "docs_list",
+      "description": "Enumerate the documents inside a folder, newest first.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "folderId": { "type": "string" } },
+        "required": ["folderId"]
+      },
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "listFolders",
+      "description": "Enumerate the folders in the drive, alphabetically.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "folder-get",
+      "description": "Return one folder's metadata: name, owner, and item count.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "folderId": { "type": "string" } },
+        "required": ["folderId"]
+      },
+      "annotations": { "readOnlyHint": true }
+    },
+    {
+      "name": "Search.In.Documents",
+      "description": "Full-text search across every document the caller can read.",
+      "inputSchema": {
+        "type": "object",
+        "properties": { "q": { "type": "string" } },
+        "required": ["q"]
+      },
+      "annotations": { "readOnlyHint": true }
+    }
+  ]
+}

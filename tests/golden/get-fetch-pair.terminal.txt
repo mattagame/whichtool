@@ -1,0 +1,65 @@
+whichtool inspect
+  target   snapshot  get-fetch-pair.json
+  surface  97021b627b48  3 tools  ~198 tokens (estimate, heuristic-bpe-v1)
+
+Worst first
+  1. warn   overlap/high  fetch_document, get_document
+            `fetch_document` and `get_document` overlap at 0.76 on
+            name-plus-description. Expect the model to confuse them; `whichtool run`
+            will tell you whether it actually does.
+  2. warn   overlap/high  fetch_document, read_document
+            `fetch_document` and `read_document` overlap at 0.73 on
+            name-plus-description. Expect the model to confuse them; `whichtool run`
+            will tell you whether it actually does.
+  3. warn   overlap/high  get_document, read_document
+            `get_document` and `read_document` overlap at 0.72 on name-plus-description.
+            Expect the model to confuse them; `whichtool run` will tell you whether it
+            actually does.
+
+Context cost  ~198 tokens total, mcp-neutral-compact
+  tool            tokens  share  desc  schema
+  fetch_document     ~69    35%   ~15     ~34
+  read_document      ~66    33%   ~15     ~32
+  get_document       ~63    32%   ~14     ~30
+  Structural estimate, not a real vocabulary, and not provider-specific. Measured
+  against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what
+  Anthropic counted: the providers disagree with each other by more than this estimate
+  disagrees with either. Use it to compare tools against each other and to spot bloat;
+  for a bill, read the number your provider reports.
+
+Annotations  3/3 tools annotated
+  readOnlyHint 3/3   destructiveHint 0/3   idempotentHint 0/3   openWorldHint 0/3
+  Annotations are hints, not guarantees: the MCP spec is explicit that a client must not
+  rely on them as a security boundary. whichtool checks their internal consistency, not
+  their truthfulness; only running the tool could establish that, and whichtool never
+  does.
+
+Lexical overlap  3 pairs scored
+  score  pair                              shared terms
+   0.76  fetch_document <-> get_document   document
+   0.73  fetch_document <-> read_document  content, document
+   0.72  get_document <-> read_document    document
+  Overlap predicts confusion, it does not measure it. `whichtool run` puts these pairs
+  in front of a model and reports which ones actually get swapped.
+
+Deprecated features
+  Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated
+  features is visible in a tools/list response or a tool definition. They are all
+  client-, authorization- or transport-level, so there is nothing on a surface to flag.
+  The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.
+
+Findings  0 errors, 3 warnings, 0 info
+  warn   overlap/high  fetch_document, get_document
+         `fetch_document` and `get_document` overlap at 0.76 on name-plus-description.
+         Expect the model to confuse them; `whichtool run` will tell you whether it
+         actually does.
+  warn   overlap/high  fetch_document, read_document
+         `fetch_document` and `read_document` overlap at 0.73 on name-plus-description.
+         Expect the model to confuse them; `whichtool run` will tell you whether it
+         actually does.
+  warn   overlap/high  get_document, read_document
+         `get_document` and `read_document` overlap at 0.72 on name-plus-description.
+         Expect the model to confuse them; `whichtool run` will tell you whether it
+         actually does.
+
+No tool was executed. whichtool read tools/list and stopped there.

@@ -1,0 +1,258 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "clean.json"
+  },
+  "surface": {
+    "hash": "sha256:bab8b902ed2ec665527d3c34b76253c33d1d3bf48f385fabf022e7e059feaa9e",
+    "toolCount": 4,
+    "tools": [
+      {
+        "name": "get_invoice",
+        "hasDescription": true,
+        "descriptionLength": 172,
+        "semantics": "read",
+        "parameterCount": 1,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 142,
+          "name": 6,
+          "description": 50,
+          "schema": 73,
+          "envelope": 13
+        },
+        "tokenShare": 0.21745788667687596,
+        "servedIndex": 0,
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "issue_refund",
+        "hasDescription": true,
+        "descriptionLength": 148,
+        "semantics": "mutate",
+        "parameterCount": 3,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 178,
+          "name": 7,
+          "description": 43,
+          "schema": 115,
+          "envelope": 13
+        },
+        "tokenShare": 0.2725880551301684,
+        "servedIndex": 2,
+        "annotations": {
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "list_overdue_invoices",
+        "hasDescription": true,
+        "descriptionLength": 162,
+        "semantics": "read",
+        "parameterCount": 2,
+        "requiredParameterCount": 0,
+        "tokens": {
+          "total": 151,
+          "name": 9,
+          "description": 48,
+          "schema": 81,
+          "envelope": 13
+        },
+        "tokenShare": 0.23124042879019907,
+        "servedIndex": 1,
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "schedule_dunning_reminder",
+        "hasDescription": true,
+        "descriptionLength": 161,
+        "semantics": "mutate",
+        "parameterCount": 3,
+        "requiredParameterCount": 2,
+        "tokens": {
+          "total": 182,
+          "name": 10,
+          "description": 48,
+          "schema": 111,
+          "envelope": 13
+        },
+        "tokenShare": 0.2787136294027565,
+        "servedIndex": 3,
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 653,
+    "byTool": {
+      "get_invoice": {
+        "total": 142,
+        "name": 6,
+        "description": 50,
+        "schema": 73,
+        "envelope": 13
+      },
+      "issue_refund": {
+        "total": 178,
+        "name": 7,
+        "description": 43,
+        "schema": 115,
+        "envelope": 13
+      },
+      "list_overdue_invoices": {
+        "total": 151,
+        "name": 9,
+        "description": 48,
+        "schema": 81,
+        "envelope": 13
+      },
+      "schedule_dunning_reminder": {
+        "total": 182,
+        "name": 10,
+        "description": 48,
+        "schema": 111,
+        "envelope": 13
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 4,
+      "annotated": 4,
+      "byHint": {
+        "readOnlyHint": 4,
+        "destructiveHint": 4,
+        "idempotentHint": 4,
+        "openWorldHint": 4
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 6,
+    "pairsReported": 6,
+    "pairs": [
+      {
+        "tools": [
+          "get_invoice",
+          "issue_refund"
+        ],
+        "score": 0.21902017291066284,
+        "nameScore": 0,
+        "descriptionScore": 0.21739130434782608,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "payment"
+        ]
+      },
+      {
+        "tools": [
+          "issue_refund",
+          "schedule_dunning_reminder"
+        ],
+        "score": 0.21714285714285714,
+        "nameScore": 0.05128205128205128,
+        "descriptionScore": 0.21864951768488747,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "payment"
+        ]
+      },
+      {
+        "tools": [
+          "get_invoice",
+          "schedule_dunning_reminder"
+        ],
+        "score": 0.21447721179624665,
+        "nameScore": 0,
+        "descriptionScore": 0.23283582089552238,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "payment"
+        ]
+      },
+      {
+        "tools": [
+          "get_invoice",
+          "list_overdue_invoices"
+        ],
+        "score": 0.2,
+        "nameScore": 0.35294117647058826,
+        "descriptionScore": 0.16071428571428573,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "list_overdue_invoices",
+          "schedule_dunning_reminder"
+        ],
+        "score": 0.1447721179624665,
+        "nameScore": 0,
+        "descriptionScore": 0.15384615384615385,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "date"
+        ]
+      },
+      {
+        "tools": [
+          "issue_refund",
+          "list_overdue_invoices"
+        ],
+        "score": 0.11527377521613832,
+        "nameScore": 0.05714285714285714,
+        "descriptionScore": 0.10897435897435898,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": [
+          "money"
+        ]
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": []
+  },
+  "diagnostics": [],
+  "thresholds": [],
+  "analysisOk": true,
+  "thresholdsOk": true,
+  "ok": true
+}

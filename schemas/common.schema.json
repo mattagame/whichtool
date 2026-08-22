@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mattagame/whichtool/main/schemas/common.schema.json",
+  "title": "whichtool shared report definitions",
+  "$defs": {
+    "surfaceSource": {
+      "type": "object",
+      "properties": {
+        "transport": { "type": "string" },
+        "ref": { "type": "string" }
+      },
+      "required": ["transport", "ref"],
+      "additionalProperties": false
+    },
+    "tokenizerInfo": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "exact": { "type": "boolean" },
+        "approximates": { "type": ["string", "null"] },
+        "note": { "type": "string" }
+      },
+      "required": ["id", "exact", "approximates", "note"],
+      "additionalProperties": false
+    },
+    "toolTokenBreakdown": {
+      "type": "object",
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "name": { "type": "integer", "minimum": 0 },
+        "description": { "type": "integer", "minimum": 0 },
+        "schema": { "type": "integer", "minimum": 0 },
+        "envelope": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["total", "name", "description", "schema", "envelope"],
+      "additionalProperties": false
+    },
+    "surfaceTokens": {
+      "type": "object",
+      "properties": {
+        "tokenizer": { "$ref": "#/$defs/tokenizerInfo" },
+        "serialization": { "type": "string" },
+        "total": { "type": "integer", "minimum": 0 },
+        "byTool": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/toolTokenBreakdown" }
+        }
+      },
+      "required": ["tokenizer", "serialization", "total", "byTool"],
+      "additionalProperties": false
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "severity": { "enum": ["error", "warning", "info"] },
+        "message": { "type": "string" },
+        "tool": { "type": "string" },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "detail": { "type": "object" }
+      },
+      "required": ["code", "severity", "message"],
+      "additionalProperties": false
+    },
+    "thresholdCheck": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "limit": { "type": "number" },
+        "actual": { "type": "number" },
+        "ok": { "type": "boolean" }
+      },
+      "required": ["name", "limit", "actual", "ok"],
+      "additionalProperties": false
+    },
+    "proportion": {
+      "type": "object",
+      "description": "A measured rate. When the denominator is zero, value and ci95 are null.",
+      "$comment": "numerator <= denominator is a runtime invariant; standard JSON Schema cannot compare sibling numeric values.",
+      "properties": {
+        "numerator": { "type": "integer", "minimum": 0 },
+        "denominator": { "type": "integer", "minimum": 0 },
+        "value": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "ci95": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": { "type": "number", "minimum": 0, "maximum": 1 },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            { "type": "null" }
+          ]
+        }
+      },
+      "required": ["numerator", "denominator", "value", "ci95"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "denominator": { "const": 0 } },
+            "required": ["denominator"]
+          },
+          "then": {
+            "properties": {
+              "value": { "type": "null" },
+              "ci95": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "denominator": { "type": "integer", "minimum": 1 },
+              "value": { "type": "number", "minimum": 0, "maximum": 1 },
+              "ci95": {
+                "type": "array",
+                "prefixItems": [
+                  { "type": "number", "minimum": 0, "maximum": 1 },
+                  { "type": "number", "minimum": 0, "maximum": 1 }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "tools": [
+    {
+      "name": "get_invoice",
+      "description": "Return one invoice by its number, including line items, tax breakdown and the current payment state. Use this when the caller already knows exactly which invoice they mean.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "invoiceNumber": {
+            "type": "string",
+            "description": "The human-facing invoice number, for example INV-2024-0091."
+          }
+        },
+        "required": ["invoiceNumber"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_overdue_invoices",
+      "description": "Enumerate invoices whose due date has passed and which are not yet settled, oldest first. Answers questions about who owes money, not about one specific document.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date",
+            "description": "Treat this date as today."
+          },
+          "minimumDaysLate": {
+            "type": "integer",
+            "description": "Skip anything less overdue than this."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "issue_refund",
+      "description": "Move money back to the payer's original method. The transfer is irreversible once the payment processor accepts it, and a partial amount is allowed.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "paymentId": { "type": "string", "description": "Identifier of the settled payment." },
+          "amountCents": { "type": "integer", "description": "Omit to refund the whole payment." },
+          "reason": { "type": "string", "description": "Shown on the payer's statement." }
+        },
+        "required": ["paymentId"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "schedule_dunning_reminder",
+      "description": "Queue a polite payment chase to be delivered on a future date. Calling it twice for the same debtor replaces the pending message rather than adding a second one.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "debtorId": { "type": "string", "description": "Account that owes the balance." },
+          "sendOn": { "type": "string", "format": "date", "description": "Delivery date." },
+          "tone": { "type": "string", "enum": ["gentle", "firm", "final"] }
+        },
+        "required": ["debtorId", "sendOn"],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

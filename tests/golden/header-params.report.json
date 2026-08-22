@@ -1,0 +1,231 @@
+{
+  "schemaVersion": "whichtool.inspect/1",
+  "target": {
+    "transport": "snapshot",
+    "ref": "header-params.json"
+  },
+  "surface": {
+    "hash": "sha256:0588f240a28c3ad60978445a1db90f650e379e31ad461d87f624dc8667e9378e",
+    "toolCount": 3,
+    "tools": [
+      {
+        "name": "execute_query",
+        "hasDescription": true,
+        "descriptionLength": 73,
+        "semantics": "mutate",
+        "parameterCount": 2,
+        "requiredParameterCount": 2,
+        "tokens": {
+          "total": 134,
+          "name": 7,
+          "description": 22,
+          "schema": 92,
+          "envelope": 13
+        },
+        "tokenShare": 0.32923832923832924,
+        "servedIndex": 0,
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "export_report",
+        "hasDescription": true,
+        "descriptionLength": 63,
+        "semantics": "read",
+        "parameterCount": 2,
+        "requiredParameterCount": 2,
+        "tokens": {
+          "total": 135,
+          "name": 7,
+          "description": 20,
+          "schema": 95,
+          "envelope": 13
+        },
+        "tokenShare": 0.3316953316953317,
+        "servedIndex": 1,
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "stream_events",
+        "hasDescription": true,
+        "descriptionLength": 67,
+        "semantics": "unknown",
+        "parameterCount": 2,
+        "requiredParameterCount": 1,
+        "tokens": {
+          "total": 138,
+          "name": 7,
+          "description": 21,
+          "schema": 97,
+          "envelope": 13
+        },
+        "tokenShare": 0.33906633906633904,
+        "servedIndex": 2,
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      }
+    ]
+  },
+  "tokens": {
+    "tokenizer": {
+      "id": "heuristic-bpe-v1",
+      "exact": false,
+      "approximates": null,
+      "note": "Structural estimate, not a real vocabulary, and not provider-specific. Measured against the same four-tool surface it read 2.4x what OpenAI counted and 0.5x what Anthropic counted: the providers disagree with each other by more than this estimate disagrees with either. Use it to compare tools against each other and to spot bloat; for a bill, read the number your provider reports."
+    },
+    "serialization": "mcp-neutral-compact",
+    "total": 407,
+    "byTool": {
+      "execute_query": {
+        "total": 134,
+        "name": 7,
+        "description": 22,
+        "schema": 92,
+        "envelope": 13
+      },
+      "export_report": {
+        "total": 135,
+        "name": 7,
+        "description": 20,
+        "schema": 95,
+        "envelope": 13
+      },
+      "stream_events": {
+        "total": 138,
+        "name": 7,
+        "description": 21,
+        "schema": 97,
+        "envelope": 13
+      }
+    }
+  },
+  "annotations": {
+    "coverage": {
+      "toolCount": 3,
+      "annotated": 3,
+      "byHint": {
+        "readOnlyHint": 3,
+        "destructiveHint": 3,
+        "idempotentHint": 3,
+        "openWorldHint": 3
+      }
+    },
+    "caveat": "Annotations are hints, not guarantees: the MCP spec is explicit that a client must not rely on them as a security boundary. whichtool checks their internal consistency, not their truthfulness; only running the tool could establish that, and whichtool never does."
+  },
+  "overlap": {
+    "method": "sorensen-dice over character trigrams of name-plus-description",
+    "pairsConsidered": 3,
+    "pairsReported": 3,
+    "pairs": [
+      {
+        "tools": [
+          "execute_query",
+          "export_report"
+        ],
+        "score": 0.2289156626506024,
+        "nameScore": 0.14285714285714285,
+        "descriptionScore": 0.2463768115942029,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "export_report",
+          "stream_events"
+        ],
+        "score": 0.2,
+        "nameScore": 0,
+        "descriptionScore": 0.25757575757575757,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      },
+      {
+        "tools": [
+          "execute_query",
+          "stream_events"
+        ],
+        "score": 0.17647058823529413,
+        "nameScore": 0,
+        "descriptionScore": 0.2112676056338028,
+        "identicalDescription": false,
+        "distinctiveSharedTerms": []
+      }
+    ]
+  },
+  "deprecations": {
+    "checked": true,
+    "specRevision": "2026-07-28",
+    "verifiedOn": "2026-08-17",
+    "ruleCount": 0,
+    "registrySize": 6,
+    "note": "Checked against MCP 2026-07-28 (registry read 2026-08-17): none of the 6 deprecated features is visible in a tools/list response or a tool definition. They are all client-, authorization- or transport-level, so there is nothing on a surface to flag. The deprecated HTTP+SSE transport is refused by `--transport legacy-sse` instead.",
+    "diagnostics": []
+  },
+  "headerParams": {
+    "rejectedTools": [
+      "export_report",
+      "stream_events"
+    ]
+  },
+  "diagnostics": [
+    {
+      "code": "x-mcp-header/invalid",
+      "severity": "error",
+      "message": "Tool `export_report` has an invalid `x-mcp-header` annotation, so a conforming Streamable HTTP client must exclude it from tools/list entirely: the model never sees this tool. `/properties/tenant`: `Tenant Id` is not a valid HTTP field-name token (RFC 9110 tchar); `/properties/tenant`: `number` parameters may not be mirrored into a header.",
+      "tool": "export_report",
+      "detail": {
+        "problems": [
+          "`/properties/tenant`: `Tenant Id` is not a valid HTTP field-name token (RFC 9110 tchar)",
+          "`/properties/tenant`: `number` parameters may not be mirrored into a header"
+        ]
+      }
+    },
+    {
+      "code": "x-mcp-header/invalid",
+      "severity": "error",
+      "message": "Tool `stream_events` has an invalid `x-mcp-header` annotation, so a conforming Streamable HTTP client must exclude it from tools/list entirely: the model never sees this tool. `/properties/filters/items`: the property is not statically reachable, so the path has to be a chain of `properties` keys and must not pass through `items`, `$ref`, or a composition or conditional keyword.",
+      "tool": "stream_events",
+      "detail": {
+        "problems": [
+          "`/properties/filters/items`: the property is not statically reachable, so the path has to be a chain of `properties` keys and must not pass through `items`, `$ref`, or a composition or conditional keyword"
+        ]
+      }
+    },
+    {
+      "code": "annotations/read-only-with-mutating-name",
+      "severity": "warning",
+      "message": "Tool `execute_query` declares `readOnlyHint: true` but its name leads with `execute`, which reads as a write. Either the hint or the name is misleading the model.",
+      "tool": "execute_query",
+      "detail": {
+        "verb": "execute",
+        "semantics": "mutate"
+      }
+    },
+    {
+      "code": "x-mcp-header/present",
+      "severity": "info",
+      "message": "Tool `execute_query` mirrors a parameter into HTTP headers. Header values are visible to every intermediary on the path, so nothing sensitive should be among them.",
+      "tool": "execute_query",
+      "detail": {
+        "count": 1
+      }
+    }
+  ],
+  "thresholds": [],
+  "analysisOk": false,
+  "thresholdsOk": true,
+  "ok": false
+}
